@@ -8,10 +8,14 @@ import ChangePassword from '@/pages/ChangePassword'
 import Dashboard from '@/pages/Dashboard'
 import CategoryList from '@/pages/products/CategoryList'
 import ProductList from '@/pages/products/ProductList'
+import CaseList from '@/pages/cases/CaseList'
+import JobList from '@/pages/recruit/JobList'
 import NewsList from '@/pages/news/NewsList'
 import PageList from '@/pages/content/PageList'
 import MilestoneList from '@/pages/content/MilestoneList'
 import FaqList from '@/pages/content/FaqList'
+import StoreEdit from '@/pages/store/StoreEdit'
+import LeadList from '@/pages/lead/LeadList'
 import HomeConfig from '@/pages/home/HomeConfig'
 
 /** 路由守卫：未登录跳转 /login */
@@ -42,12 +46,20 @@ export default function App() {
         {/* 产品管理 */}
         <Route path="products/categories" element={<CategoryList />} />
         <Route path="products" element={<ProductList />} />
+        {/* 案例管理 */}
+        <Route path="cases" element={<CaseList />} />
         {/* 新闻管理 */}
         <Route path="news" element={<NewsList />} />
+        {/* 招聘管理 */}
+        <Route path="recruit" element={<JobList />} />
         {/* 内容管理 */}
         <Route path="content/pages" element={<PageList />} />
         <Route path="content/milestones" element={<MilestoneList />} />
         <Route path="content/faqs" element={<FaqList />} />
+        {/* 门店管理 */}
+        <Route path="store" element={<StoreEdit />} />
+        {/* 留资管理 */}
+        <Route path="leads" element={<LeadList />} />
         {/* 首页配置 */}
         <Route path="home" element={<HomeConfig />} />
       </Route>

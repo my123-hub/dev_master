@@ -206,3 +206,197 @@ export async function uploadImage(file: File): Promise<string> {
   })
   return res.url
 }
+
+// ==================== 案例管理（M3） ====================
+export interface CaseItem {
+  id: number
+  title: string
+  cover_url: string | null
+  space_tags: string[] | null
+  city: string | null
+  area: string | null
+  finished_at: string | null
+  content: string | null
+  images: string[] | null
+  sort_order: number
+  status: number
+  is_activate: number
+}
+export interface CasePayload {
+  title: string
+  cover_url?: string | null
+  space_tags?: string[] | null
+  city?: string | null
+  area?: string | null
+  finished_at?: string | null
+  content?: string | null
+  images?: string[] | null
+  sort_order?: number
+  status?: number
+}
+export const caseApi = {
+  list: (params: { page: number; page_size: number; keyword?: string; status?: number }) =>
+    request.get<PageResult<CaseItem>>('/cases', { params }),
+  create: (data: CasePayload) => request.post<CaseItem>('/cases', data),
+  update: (id: number, data: CasePayload) => request.put<CaseItem>(`/cases/${id}`, data),
+  remove: (id: number) => request.delete<any>(`/cases/${id}`),
+  changeStatus: (id: number, status: number) =>
+    request.put<any>(`/cases/${id}/status`, { status }),
+}
+
+// ==================== 招聘管理（M3） ====================
+export interface JobItem {
+  id: number
+  title: string
+  category: number
+  location: string
+  job_type: string | null
+  salary_range: string | null
+  responsibility: string | null
+  requirement: string | null
+  contact: string
+  is_urgent: number
+  status: number
+  is_activate: number
+  application_count: number
+}
+export interface JobPayload {
+  title: string
+  category: number
+  location?: string
+  job_type?: string | null
+  salary_range?: string | null
+  responsibility?: string | null
+  requirement?: string | null
+  contact: string
+  is_urgent?: number
+  status?: number
+}
+export const jobApi = {
+  list: (params: { page: number; page_size: number; keyword?: string; category?: number; status?: number }) =>
+    request.get<PageResult<JobItem>>('/jobs', { params }),
+  create: (data: JobPayload) => request.post<JobItem>('/jobs', data),
+  update: (id: number, data: JobPayload) => request.put<JobItem>(`/jobs/${id}`, data),
+  remove: (id: number) => request.delete<any>(`/jobs/${id}`),
+  changeStatus: (id: number, status: number) =>
+    request.put<any>(`/jobs/${id}/status`, { status }),
+}
+
+// ==================== 简历投递（M3） ====================
+export interface JobApplicationItem {
+  id: number
+  job_id: number
+  job_title: string | null
+  name: string
+  phone: string
+  email: string | null
+  resume_url: string
+  note: string | null
+  status: number
+  is_activate: number
+  created_date: string
+}
+export const applicationApi = {
+  list: (params: { page: number; page_size: number; status?: number; job_id?: number; keyword?: string }) =>
+    request.get<PageResult<JobApplicationItem>>('/job-applications', { params }),
+  detail: (id: number) => request.get<JobApplicationItem>(`/job-applications/${id}`),
+  changeStatus: (id: number, status: number) =>
+    request.put<any>(`/job-applications/${id}/status`, { status }),
+  remove: (id: number) => request.delete<any>(`/job-applications/${id}`),
+  export: (params: { fmt?: 'csv' | 'excel'; status?: number; job_id?: number; keyword?: string }) =>
+    request.get<any>(`/exports/job-applications`, { params, responseType: 'blob' }),
+}
+
+// ==================== 门店管理（M3） ====================
+export interface StoreItem {
+  id: number
+  name: string
+  city: string
+  address: string
+  phone: string
+  business_hours: string | null
+  longitude: string | null
+  latitude: string | null
+  sort_order: number
+  is_activate: number
+}
+export interface StorePayload {
+  name: string
+  city?: string
+  address: string
+  phone: string
+  business_hours?: string | null
+  longitude?: string | null
+  latitude?: string | null
+  sort_order?: number
+}
+export const storeApi = {
+  list: () => request.get<StoreItem[]>('/stores'),
+  update: (id: number, data: StorePayload) => request.put<StoreItem>(`/stores/${id}`, data),
+}
+
+// ==================== 留资管理（M3：预约 + 留言） ====================
+export interface AppointmentItem {
+  id: number
+  name: string
+  phone: string
+  store_name: string
+  appointment_date: string | null
+  intention: string | null
+  remark: string | null
+  status: number
+  is_activate: number
+  created_date: string
+}
+export interface MessageItem {
+  id: number
+  name: string
+  phone: string
+  email: string | null
+  content: string
+  status: number
+  is_activate: number
+  created_date: string
+}
+// 导出工具：将 blob 下载为文件（响应头 filename* 编码的文件名，UTF-8 解码）
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+// 从 Content-Disposition 解析文件名（filename*=UTF-8''...）
+export function parseFileName(disposition: string | null, fallback: string): string {
+  if (!disposition) return fallback
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition)
+  if (star) {
+    try {
+      return decodeURIComponent(star[1])
+    } catch {
+      /* 解码失败用后备名 */
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(disposition)
+  return plain ? plain[1] : fallback
+}
+export const leadApi = {
+  appointments: (params: { page: number; page_size: number; status?: number; date_from?: string; date_to?: string; keyword?: string }) =>
+    request.get<PageResult<AppointmentItem>>('/appointments', { params }),
+  appointmentDetail: (id: number) => request.get<AppointmentItem>(`/appointments/${id}`),
+  changeAppointmentStatus: (id: number, status: number) =>
+    request.put<any>(`/appointments/${id}/status`, { status }),
+  removeAppointment: (id: number) => request.delete<any>(`/appointments/${id}`),
+  messages: (params: { page: number; page_size: number; status?: number; keyword?: string }) =>
+    request.get<PageResult<MessageItem>>('/messages', { params }),
+  changeMessageStatus: (id: number, status: number) =>
+    request.put<any>(`/messages/${id}/status`, { status }),
+  removeMessage: (id: number) => request.delete<any>(`/messages/${id}`),
+  exportAppointments: (params: { fmt?: 'csv' | 'excel'; status?: number; date_from?: string; date_to?: string; keyword?: string }) =>
+    request.get<any>(`/exports/appointments`, { params, responseType: 'blob' }),
+  exportMessages: (params: { fmt?: 'csv' | 'excel'; status?: number; keyword?: string }) =>
+    request.get<any>(`/exports/messages`, { params, responseType: 'blob' }),
+}

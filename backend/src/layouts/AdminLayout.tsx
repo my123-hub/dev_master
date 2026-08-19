@@ -12,6 +12,10 @@ import {
   HomeOutlined,
   LogoutOutlined,
   UserOutlined,
+  CameraOutlined,
+  TeamOutlined,
+  ShopOutlined,
+  InboxOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getUser, hasPerm, logout } from '@/store/auth'
@@ -37,10 +41,22 @@ const MENU = [
     ],
   },
   {
+    key: '/cases',
+    icon: <CameraOutlined />,
+    label: '案例管理',
+    perm: 'case:view',
+  },
+  {
     key: '/news',
     icon: <ReadOutlined />,
     label: '新闻管理',
     perm: 'news:view',
+  },
+  {
+    key: '/recruit',
+    icon: <TeamOutlined />,
+    label: '招聘管理',
+    perm: 'recruit:view',
   },
   {
     key: '/content',
@@ -52,6 +68,18 @@ const MENU = [
       { key: '/content/milestones', label: '发展历程' },
       { key: '/content/faqs', label: '常见问题 FAQ' },
     ],
+  },
+  {
+    key: '/store',
+    icon: <ShopOutlined />,
+    label: '门店管理',
+    perm: 'store:view',
+  },
+  {
+    key: '/leads',
+    icon: <InboxOutlined />,
+    label: '留资管理',
+    perm: 'lead:view',
   },
   {
     key: '/home',

@@ -50,6 +50,8 @@ request.interceptors.request.use((config) => {
 // 响应拦截：统一处理业务错误
 request.interceptors.response.use(
   (response) => {
+    // 文件流（导出下载）：直接返回完整响应（含 blob 与 content-disposition 头，供文件名解析）
+    if (response.config.responseType === 'blob') return response
     const res = response.data as ApiResult
     // 业务成功
     if (res.code === 0) return res.data
