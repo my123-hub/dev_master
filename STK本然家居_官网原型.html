@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STK本然家居 · 企业官网原型</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:    '#0F3D2E',
+          inklt:  '#6FA088',
+          cream:  '#FAF8F5',
+          mist:   '#F4F7F5',
+          weak:   '#9E9E9E',
+        },
+        fontFamily: {
+          sans: ['-apple-system','BlinkMacSystemFont','"PingFang SC"','"Microsoft YaHei"','"Noto Sans SC"','"Source Han Sans SC"','sans-serif'],
+        },
+        boxShadow: {
+          soft: '0 2px 12px rgba(0,0,0,0.06)',
+          nav:  '0 1px 0 rgba(15,61,46,0.06)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root { color-scheme: light; }
+  body { background:#FAF8F5; color:#0F3D2E; }
+  .tracking-title { letter-spacing: .14em; }
+  .tracking-sub   { letter-spacing: .06em; }
+
+  /* 导航下划线 */
+  .nav-link { position:relative; cursor:pointer; }
+  .nav-link::after{
+    content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px;
+    background:#6FA088; transform:scaleX(0); transform-origin:center;
+    transition:transform .25s ease;
+  }
+  .nav-link.active::after, .nav-link:hover::after{ transform:scaleX(1); }
+  .nav-link.active{ color:#0F3D2E; font-weight:500; }
+
+  /* ========== 轮播 (FR-08) — 平滑单向过渡 ========== */
+  .carousel-viewport { overflow:hidden; position:relative; }
+  .carousel-track {
+    display:flex; transition:transform .45s cubic-bezier(.25,.1,.25,1);
+    will-change: transform;
+  }
+  .carousel-track.no-trans { transition:none!important; }
+  .carousel-slide { min-width:100%; flex-shrink:0; }
+  .dot-btn { width:10px; height:10px; border-radius:9999px; background:rgba(255,255,255,.35); transition:all .3s ease; cursor:pointer; border:none; padding:0; }
+  .dot-btn.active { background:#fff; width:28px; border-radius:5px; }
+  .arrow-btn { width:64px; height:64px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+                transition:opacity .2s, transform .12s; border:none; background:transparent; color:#fff; flex-shrink:0;
+                z-index:30; pointer-events:auto; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .arrow-btn svg { filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+  .arrow-btn:hover { opacity:.75; }
+  .arrow-btn:active { transform: scale(.92); }
+
+  /* Tab 切换 */
+  .tab-btn { position:relative; padding-bottom:8px; cursor:pointer; transition:color .2s; background:none; border:none; }
+  .tab-btn::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px;
+                    background:#6FA088; transform:scaleX(0); transition:transform .25s; }
+  .tab-btn.active{ color:#0F3D2E; font-weight:600; }
+  .tab-btn.active::after{ transform:scaleX(1); }
+
+  /* FAQ 手风琴 */
+  .faq-answer {
+    max-height:0; opacity:0; overflow:hidden;
+    transition:max-height .35s ease, opacity .25s ease, padding .35s ease;
+    padding-top:0; padding-bottom:0;
+  }
+  .faq-item.open .faq-answer { max-height:300px; opacity:1; padding-top:.5rem; padding-bottom:1rem; }
+  .faq-icon { transition:transform .25s; }
+  .faq-item.open .faq-icon { transform:rotate(45deg); }
+
+  /* 页面切换动画 */
+  .page { display:none; opacity:0; transition:opacity .3s ease; min-height:calc(100vh - 120px); }
+  .page.active { display:block; opacity:1; animation:fadeIn .35s ease forwards; }
+  @keyframes fadeIn { from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* 图片 hover */
+  .img-zoom { transition:transform .35s ease, box-shadow .35s ease; }
+  .group:hover .img-zoom { transform: scale(1.04); }
+
+  /* 产品/案例卡片交互 */
+  .card-interactive {
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    border: 1px solid transparent;
+  }
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(15,61,46,.10);
+    border-color: rgba(111,160,136,.25);
+  }
+  .card-interactive:active {
+    transform: translateY(-2px) scale(.99);
+    transition-duration: .1s;
+  }
+
+  /* 首页亮点卡片交互 */
+  .highlight-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+    cursor: pointer;
+  }
+  .highlight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(15,61,46,.12);
+  }
+  .highlight-card .hl-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height .35s ease, opacity .3s ease, margin-top .3s ease, padding-top .3s ease;
+  }
+  .highlight-card .hl-detail.expanded {
+    max-height: 300px;
+    opacity: 1;
+  }
+  .highlight-card.hl-active {
+    box-shadow: 0 8px 24px rgba(15,61,46,.16);
+    transform: translateY(-3px);
+  }
+
+  /* 占位图 */
+  .ph{ background: linear-gradient(135deg, #0F3D2E 0%, #1d5240 45%, #6FA088 100%); }
+  .ph-soft{ background: linear-gradient(135deg, #F4F7F5 0%, #e7efe9 100%); }
+  .ph-warm{ background: linear-gradient(135deg, #e8dfd4 0%, #f0ebe5 50%, #faf8f5 100%); }
+  .float-nav{ top:16px; left:16px; right:16px; }
+
+  /* 案例分类筛选标签 */
+  .case-filter-tag.active {
+    background: #0F3D2E;
+    color: #FAF8F5;
+    border-color: transparent;
+  }
+  .case-filter-tag:not(.active):hover {
+    background: #F4F7F5;
+    border-color: #0F3D2E;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation:none!important; transition:none!important; }
+    .carousel-track{ transition:none!important; }
+    .page{ animation:none!important; opacity:1; }
+    .page.active{ display:block; }
+  }
+</style>
+</head>
+
+<body class="font-sans antialiased text-ink">
+
+<!-- ============================ 顶部导航栏（固定） ============================
+     PRD §7.1 前台导航树：
+     首页 | 产品(产品中心/新案例展示) | 新闻(企业新闻/行业资讯)
+     | 招聘入口(社会招聘/校园招聘) | 关于我们(5个子项) | 服务支持(3个子项)
+     + 独立 CTA「在线预约」
+========================================================================== -->
+<header id="siteHeader" class="float-nav fixed z-50">
+  <nav class="mx-auto max-w-7xl bg-cream/90 backdrop-blur-md border border-black/5 shadow-nav rounded-xl">
+    <div class="flex items-center justify-between h-16 px-5 lg:px-8">
+      <!-- Logo → 回首页 -->
+      <a onclick="navigateTo('home')" class="flex items-center gap-2 cursor-pointer shrink-0" aria-label="STK本然家居 首页">
+        <span class="flex h-9 w-9 items-center justify-center rounded-md bg-ink text-cream text-sm font-bold tracking-title">STK</span>
+        <span class="text-base font-semibold tracking-title text-ink">本然家居</span>
+      </a>
+
+      <!-- 桌面端主导航 -->
+      <ul class="hidden lg:flex items-center gap-1 text-[15px]">
+        <li><a onclick="navigateTo('home')" data-nav="home" class="nav-link px-3 py-2 text-weak hover:text-ink transition-colors">首页</a></li>
+
+        <!-- 产品下拉 -->
+        <li class="relative group" data-dropdown>
+          <a onclick="navigateTo('products')" data-nav="products" class="nav-link flex items-center gap-1 px-3 py-2 text-weak hover:text-ink transition-colors">
+            产品<svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-56">
+            <div class="bg-cream rounded-xl shadow-soft border border-black/5 py-2">
+              <a onclick="navigateTo('products')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">产品中心</span><span class="text-xs text-weak mt-0.5">系列 → 产品列表 → 详情</span></a>
+              <a onclick="navigateTo('cases')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">新案例展示</span><span class="text-xs text-weak mt-0.5">案例列表 → 案例详情</span></a>
+            </div>
+          </div>
+        </li>
+
+        <!-- 新闻下拉 -->
+        <li class="relative group" data-dropdown>
+          <a onclick="navigateTo('news')" data-nav="news" class="nav-link flex items-center gap-1 px-3 py-2 text-weak hover:text-ink transition-colors">
+            新闻<svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-56">
+            <div class="bg-cream rounded-xl shadow-soft border border-black/5 py-2">
+              <a onclick="navigateTo('news'); switchNewsTab('enterprise')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">企业新闻</span><span class="text-xs text-weak mt-0.5">列表 → 详情</span></a>
+              <a onclick="navigateTo('news'); switchNewsTab('industry')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">行业资讯</span><span class="text-xs text-weak mt-0.5">列表 → 详情</span></a>
+            </div>
+          </div>
+        </li>
+
+        <!-- 招聘入口下拉 -->
+        <li class="relative group" data-dropdown>
+          <a onclick="navigateTo('jobs')" data-nav="jobs" class="nav-link flex items-center gap-1 px-3 py-2 text-weak hover:text-ink transition-colors">
+            招聘入口<svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-56">
+            <div class="bg-cream rounded-xl shadow-soft border border-black/5 py-2">
+              <a onclick="navigateTo('jobs'); switchJobTab('social')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">社会招聘</span><span class="text-xs text-weak mt-0.5">职位列表 → 职位详情</span></a>
+              <a onclick="navigateTo('jobs'); switchJobTab('campus')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">校园招聘</span><span class="text-xs text-weak mt-0.5">职位列表 → 职位详情</span></a>
+            </div>
+          </div>
+        </li>
+
+        <!-- 关于我们下拉 -->
+        <li class="relative group" data-dropdown>
+          <a onclick="navigateTo('about-stk')" data-nav="about" class="nav-link flex items-center gap-1 px-3 py-2 text-weak hover:text-ink transition-colors">
+            关于我们<svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-60">
+            <div class="bg-cream rounded-xl shadow-soft border border-black/5 py-2">
+              <a onclick="navigateTo('about-stk')"   class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">关于STK</span><span class="text-xs text-weak mt-0.5">企业简介</span></a>
+              <a onclick="navigateTo('timeline')"       class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">发展历程</span><span class="text-xs text-weak mt-0.5">时间轴展示</span></a>
+              <a onclick="navigateTo('brand')"         class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">品牌介绍</span><span class="text-xs text-weak mt-0.5">品牌理念与故事</span></a>
+              <a onclick="navigateTo('appointment')"   class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">在线预约</span><span class="text-xs text-weak mt-0.5">到店参观表单页</span></a>
+              <a onclick="navigateTo('contact')"       class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">联系我们</span><span class="text-xs text-weak mt-0.5">地址/电话/邮箱/留言/地图</span></a>
+            </div>
+          </div>
+        </li>
+
+        <!-- 服务支持下拉 -->
+        <li class="relative group" data-dropdown>
+          <a onclick="navigateTo('policy')" data-nav="support" class="nav-link flex items-center gap-1 px-3 py-2 text-weak hover:text-ink transition-colors">
+            服务支持<svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-64">
+            <div class="bg-cream rounded-xl shadow-soft border border-black/5 py-2">
+              <a onclick="navigateTo('policy')" class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">售后服务政策</span><span class="text-xs text-weak mt-0.5">政策正文</span></a>
+              <a onclick="navigateTo('faq')"    class="flex flex-col px-5 py-3 hover:bg-mist transition-colors cursor-pointer"><span class="font-medium text-ink">常见问题 FAQ</span><span class="text-xs text-weak mt-0.5">手风琴展开/收起</span></a>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <!-- CTA + 汉堡 -->
+      <div class="flex items-center gap-3 shrink-0">
+        <a onclick="navigateTo('appointment')" class="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-inklt px-4 py-2 text-sm font-medium text-white shadow-soft hover:bg-ink transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>在线预约
+        </a>
+        <button id="menuBtn" class="lg:hidden flex h-10 w-10 items-center justify-center rounded-md border border-black/10 text-ink cursor-pointer" aria-label="打开菜单" aria-expanded="false">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 移动端折叠菜单 -->
+  <div id="mobileMenu" class="lg:hidden hidden mx-4 mt-2 bg-cream border border-black/5 rounded-xl shadow-soft overflow-hidden">
+    <a onclick="navigateTo('home')"     class="block px-5 py-3 border-b border-black/5 hover:bg-mist font-medium text-ink cursor-pointer">首页</a>
+    <details class="border-b border-black/5"><summary class="px-5 py-3 cursor-pointer list-none flex justify-between items-center hover:bg-mist">产品<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+      <a onclick="navigateTo('products')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">产品中心</a>
+      <a onclick="navigateTo('cases')"    class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">新案例展示</a>
+    </details>
+    <details class="border-b border-black/5"><summary class="px-5 py-3 cursor-pointer list-none flex justify-between items-center hover:bg-mist">新闻<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+      <a onclick="navigateTo('news')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">企业新闻</a>
+      <a onclick="navigateTo('news')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">行业资讯</a>
+    </details>
+    <details class="border-b border-black/5"><summary class="px-5 py-3 cursor-pointer list-none flex justify-between items-center hover:bg-mist">招聘入口<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+      <a onclick="navigateTo('jobs')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">社会招聘</a>
+      <a onclick="navigateTo('jobs')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">校园招聘</a>
+    </details>
+    <details class="border-b border-black/5"><summary class="px-5 py-3 cursor-pointer list-none flex justify-between items-center hover:bg-mist">关于我们<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+      <a onclick="navigateTo('about-stk')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">关于STK</a>
+      <a onclick="navigateTo('about-stk')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">发展历程</a>
+      <a onclick="navigateTo('about-stk')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">品牌介绍</a>
+      <a onclick="navigateTo('appointment')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">在线预约</a>
+      <a onclick="navigateTo('about-stk')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">联系我们</a>
+    </details>
+    <details class="border-b border-black/5"><summary class="px-5 py-3 cursor-pointer list-none flex justify-between items-center hover:bg-mist">服务支持<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+      <a onclick="navigateTo('policy')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">售后服务政策</a>
+      <a onclick="navigateTo('policy')" class="block px-8 py-2.5 text-sm text-weak hover:bg-mist cursor-pointer">常见问题 FAQ</a>
+    </details>
+    <a onclick="navigateTo('appointment')" class="block px-5 py-3 text-ink font-medium bg-mist cursor-pointer">在线预约</a>
+  </div>
+</header>
+
+
+<!-- ======================================================================
+     主内容区 — SPA 页面容器
+     每个页面独立显示，通过 JS navigateTo() 切换
+====================================================================== -->
+<main id="app" class="pt-28 lg:pt-32">
+
+
+<!-- ================================================================
+  PAGE 1：首页 (home)
+  Hero轮播 + 品牌标语 + 企业亮点 + 精选产品 + 精选案例 + 最新新闻预览 + 预约CTA
+================================================================ -->
+<div id="page-home" class="page active">
+
+  <!-- Hero 轮播 Banner (FR-08) -->
+  <section>
+    <div class="mx-auto max-w-7xl">
+      <div id="bannerCarousel" class="overflow-hidden relative carousel-viewport min-h-[420px] lg:min-h-[560px]" role="region" aria-label="首页轮播 Banner">
+
+        <div id="carouselTrack" class="carousel-track">
+
+          <!-- Slide 1：品牌主视觉 -->
+          <div class="carousel-slide ph relative flex items-end">
+            <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 30% 20%, #fff 0%, transparent 45%)"></div>
+            <div class="relative p-8 lg:p-16 max-w-2xl text-cream z-10">
+              <p class="text-xs tracking-title text-cream/70 mb-3">STK BENRAN · 本然家居</p>
+              <h1 class="text-3xl lg:text-5xl font-semibold tracking-title leading-snug">让生活回归本然的质感</h1>
+              <p class="mt-4 text-cream/85 text-sm lg:text-base leading-relaxed">原创设计 · 人体工程学 · 智能制造，为每一个家呈现自然与高级的空间叙事。</p>
+              <div class="mt-6 flex gap-3">
+                <a href="javascript:void(0)" role="button" onclick="navigateTo('products')" class="rounded-md bg-cream px-5 py-2.5 text-sm font-medium text-ink hover:bg-white transition-colors cursor-pointer">走进产品</a>
+                <a href="javascript:void(0)" role="button" onclick="navigateTo('appointment')" class="rounded-md border border-cream/60 px-5 py-2.5 text-sm font-medium text-cream hover:bg-cream/10 transition-colors cursor-pointer">预约到店</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 2：原木系列新品 -->
+          <div class="carousel-slide relative flex items-end" style="background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 40%,#95D5B2 100%)">
+            <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 70% 30%, #fff 0%, transparent 40%)"></div>
+            <div class="relative p-8 lg:p-16 max-w-2xl text-cream z-10">
+              <p class="text-xs tracking-title text-cream/70 mb-3">2026 新品发布</p>
+              <h1 class="text-3xl lg:text-5xl font-semibold tracking-title leading-snug">原木系列 · 自然生长的家</h1>
+              <p class="mt-4 text-cream/85 text-sm lg:text-base leading-relaxed">甄选北美黑胡桃木，以极简线条致敬木材本身的纹理与温度。</p>
+              <div class="mt-6 flex gap-3">
+                <a href="javascript:void(0)" role="button" onclick="navigateTo('products')" class="rounded-md bg-cream px-5 py-2.5 text-sm font-medium text-ink hover:bg-white transition-colors cursor-pointer">探索系列</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3：全国体验店网络 -->
+          <div class="carousel-slide relative flex items-end" style="background:linear-gradient(135deg,#0F3D2E 0%,#3A5A4C 50%,#6FA088 100%)">
+            <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 60% 80%, #fff 0%, transparent 40%)"></div>
+            <div class="relative p-8 lg:p-16 max-w-2xl text-cream z-10">
+              <p class="text-xs tracking-title text-cream/70 mb-3">线下体验</p>
+              <h1 class="text-3xl lg:text-5xl font-semibold tracking-title leading-snug">上海旗舰体验店现已开放</h1>
+              <p class="mt-4 text-cream/85 text-sm lg:text-base leading-relaxed">沉浸式空间陈列，触摸真实材质，感受本然家居的温度。</p>
+              <div class="mt-6 flex gap-3">
+                <a href="javascript:void(0)" role="button" onclick="navigateTo('appointment')" class="rounded-md bg-cream px-5 py-2.5 text-sm font-medium text-ink hover:bg-white transition-colors cursor-pointer">立即预约</a>
+                <a href="javascript:void(0)" role="button" onclick="navigateTo('contact')" class="rounded-md border border-cream/60 px-5 py-2.5 text-sm font-medium text-cream hover:bg-cream/10 transition-colors cursor-pointer">联系我们</a>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /track -->
+
+        <!-- 左右箭头 -->
+        <button id="prevBtn" class="arrow-btn absolute left-4 top-1/2 -translate-y-1/2" aria-label="上一张">
+          <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button id="nextBtn" class="arrow-btn absolute right-4 top-1/2 -translate-y-1/2" aria-label="下一张">
+          <svg class="w-7 h-7 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <!-- 底部指示点 -->
+        <div id="dotsContainer" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 品牌标语区 (FR-09) -->
+  <section class="py-20 lg:py-24">
+    <div class="mx-auto max-w-4xl px-4 text-center">
+      <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">本然，是生活的本来面目</h2>
+      <p class="mt-4 text-weak leading-relaxed text-sm lg:text-base">我们相信，好的家居不喧哗。以克制设计承载日常，让材质与空间自然对话。</p>
+      <a onclick="navigateTo('brand')" class="inline-flex items-center gap-1 mt-6 text-inklt font-medium hover:gap-2 transition-all cursor-pointer">走进 STK →</a>
+    </div>
+  </section>
+
+  <!-- 企业亮点区 (FR-10) -->
+  <section class="py-16 bg-mist">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-cream rounded-xl p-6 shadow-soft highlight-card cursor-pointer" onclick="showHighlightDetail(this)" data-hl="design">
+          <div class="h-10 w-10 rounded-lg bg-ink/5 flex items-center justify-center text-ink mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6L12 2z"/></svg>
+          </div>
+          <h3 class="font-semibold tracking-sub">原创设计</h3>
+          <p class="mt-2 text-sm text-weak leading-relaxed">独立设计团队，理念驱动每一件作品。</p>
+          <div class="hl-detail hidden mt-4 pt-4 border-t border-black/10 text-sm text-ink/70 leading-relaxed space-y-2"></div>
+        </div>
+        <div class="bg-cream rounded-xl p-6 shadow-soft highlight-card cursor-pointer" onclick="showHighlightDetail(this)" data-hl="ergonomics">
+          <div class="h-10 w-10 rounded-lg bg-ink/5 flex items-center justify-center text-ink mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </div>
+          <h3 class="font-semibold tracking-sub">人体工程学</h3>
+          <p class="mt-2 text-sm text-weak leading-relaxed">尺度贴合身体，久坐亦舒适从容。</p>
+          <div class="hl-detail hidden mt-4 pt-4 border-t border-black/10 text-sm text-ink/70 leading-relaxed space-y-2"></div>
+        </div>
+        <div class="bg-cream rounded-xl p-6 shadow-soft highlight-card cursor-pointer" onclick="showHighlightDetail(this)" data-hl="smart">
+          <div class="h-10 w-10 rounded-lg bg-ink/5 flex items-center justify-center text-ink mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21V9l9-6 9 6v12M9 21v-6h6v6"/></svg>
+          </div>
+          <h3 class="font-semibold tracking-sub">智能制造</h3>
+          <p class="mt-2 text-sm text-weak leading-relaxed">数字化产线，品质稳定可追溯。</p>
+          <div class="hl-detail hidden mt-4 pt-4 border-t border-black/10 text-sm text-ink/70 leading-relaxed space-y-2"></div>
+        </div>
+        <div class="bg-cream rounded-xl p-6 shadow-soft highlight-card cursor-pointer" onclick="showHighlightDetail(this)" data-hl="service">
+          <div class="h-10 w-10 rounded-lg bg-ink/5 flex items-center justify-center text-ink mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.3 9.3l7.7-5.6 7.7 5.6M6 10v9h12v-9M9 19v-5h6v5"/></svg>
+          </div>
+          <h3 class="font-semibold tracking-sub">贴心服务</h3>
+          <p class="mt-2 text-sm text-weak leading-relaxed">从选品到售后，全程陪伴到家。</p>
+          <div class="hl-detail hidden mt-4 pt-4 border-t border-black/10 text-sm text-ink/70 leading-relaxed space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 精选产品 (FR-11) -->
+  <section class="py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+        <div>
+          <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">精选产品</h2>
+          <p class="mt-2 text-sm text-weak">首页推荐位 · 后台可配置</p>
+        </div>
+        <a onclick="navigateTo('products')" class="text-inklt font-medium text-sm whitespace-nowrap cursor-pointer">查看全部产品 →</a>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <a onclick="navigateTo('products')" class="group cursor-pointer block">
+          <div class="ph-soft rounded-xl overflow-hidden aspect-[4/5] flex items-center justify-center img-zoom relative">
+            <span class="text-xs text-weak tracking-sub">产品主图</span>
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-ink/80 text-cream">原木系列</span>
+          </div>
+          <h3 class="mt-3 font-medium">胡桃木餐桌</h3>
+          <p class="text-sm text-inklt mt-1">¥ 4,280</p>
+        </a>
+        <a onclick="navigateTo('products')" class="group cursor-pointer block">
+          <div class="ph-soft rounded-xl overflow-hidden aspect-[4/5] flex items-center justify-center img-zoom relative">
+            <span class="text-xs text-weak tracking-sub">产品主图</span>
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-ink/80 text-cream">软体系列</span>
+          </div>
+          <h3 class="mt-3 font-medium">云朵布艺沙发</h3>
+          <p class="text-sm text-inklt mt-1">¥ 8,990</p>
+        </a>
+        <a onclick="navigateTo('products')" class="group cursor-pointer block">
+          <div class="ph-soft rounded-xl overflow-hidden aspect-[4/5] flex items-center justify-center img-zoom relative">
+            <span class="text-xs text-weak tracking-sub">产品主图</span>
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-ink/80 text-cream">座椅系列</span>
+          </div>
+          <h3 class="mt-3 font-medium">简逸休闲椅</h3>
+          <p class="text-sm text-inklt mt-1">价格面议</p>
+        </a>
+        <a onclick="navigateTo('products')" class="group cursor-pointer block">
+          <div class="ph-soft rounded-xl overflow-hidden aspect-[4/5] flex items-center justify-center img-zoom relative">
+            <span class="text-xs text-weak tracking-sub">产品主图</span>
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-ink/80 text-cream">收纳系列</span>
+          </div>
+          <h3 class="mt-3 font-medium">原木餐边柜</h3>
+          <p class="text-sm text-inklt mt-1">¥ 3,560</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 精选案例 (FR-12) -->
+  <section class="py-16 bg-mist">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+        <div>
+          <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">精选案例</h2>
+          <p class="mt-2 text-sm text-weak">客户实景案例 · 按后台排序取前 N</p>
+        </div>
+        <a onclick="navigateTo('cases')" class="text-inklt font-medium text-sm whitespace-nowrap cursor-pointer">查看更多案例 →</a>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <a onclick="openCaseDetail(0)" class="group cursor-pointer block">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">客厅</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <h3 class="mt-3 font-medium">城市青年的留白之家</h3>
+          <p class="text-xs text-weak mt-1">客厅 / 120㎡ / 华东 · 2026.06 完工</p>
+        </a>
+        <a onclick="openCaseDetail(1)" class="group cursor-pointer block">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">餐厅</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <h3 class="mt-3 font-medium">原木质感的三口之家</h3>
+          <p class="text-xs text-weak mt-1">餐厅 / 98㎡ / 华南 · 2026.05 完工</p>
+        </a>
+        <a onclick="openCaseDetail(2)" class="group cursor-pointer block">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">书房</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <h3 class="mt-3 font-medium">沉静书房 · 阅读角落</h3>
+          <p class="text-xs text-weak mt-1">书房 / 西南 · 2026.04 完工</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 最新新闻预览 -->
+  <section class="py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="flex items-end justify-between mb-8">
+        <div>
+          <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">最新动态</h2>
+          <p class="mt-2 text-sm text-weak">了解 STK 动态与行业趋势</p>
+        </div>
+        <a onclick="navigateTo('news')" class="text-inklt font-medium text-sm cursor-pointer">查看全部 →</a>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <article class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-shadow cursor-pointer" onclick="navigateTo('news')">
+          <div class="ph-warm aspect-[16/9] flex items-center justify-center relative">
+            <span class="text-xs text-weak tracking-sub">封面图</span>
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-inklt/90 text-white">最新</span>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-inklt">2026.08.10</p>
+            <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 全新原木系列正式发布</h3>
+            <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">以可持续北美黑胡桃木与极简线条语言，重新定义都市自然生活。</p>
+          </div>
+        </article>
+        <article class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-shadow cursor-pointer" onclick="navigateTo('news')">
+          <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+          <div class="p-5">
+            <p class="text-xs text-inklt">2026.07.15</p>
+            <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 全国第六家体验店正式开业</h3>
+            <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">服务网络进一步扩展，覆盖华东、华南、西南核心城市。</p>
+          </div>
+        </article>
+        <article class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-shadow cursor-pointer" onclick="navigateTo('news')">
+          <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+          <div class="p-5">
+            <p class="text-xs text-inklt">2026.06.20</p>
+            <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 荣获「年度原创家居设计」奖项</h3>
+            <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">在 2026 中国国际家具展上获得评委一致认可。</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 首页底部 CTA -->
+  <section class="py-20 lg:py-24 bg-ink text-cream">
+    <div class="mx-auto max-w-3xl px-4 text-center">
+      <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">开启您的本然生活</h2>
+      <p class="mt-4 text-cream/75 text-sm lg:text-base">预约到店体验，感受真实材质与匠心工艺</p>
+      <div class="mt-8 flex justify-center gap-4">
+        <a onclick="navigateTo('appointment')" class="rounded-md bg-inklt px-6 py-3 text-sm font-medium text-white hover:bg-ink transition-colors cursor-pointer">立即预约</a>
+        <a onclick="navigateTo('contact')" class="rounded-md border border-cream/40 px-6 py-3 text-sm font-medium text-cream hover:bg-cream/10 transition-colors cursor-pointer">联系我们</a>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-home -->
+
+
+<!-- ================================================================
+  PAGE 2：产品中心 (products)
+================================================================ -->
+<div id="page-products" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <!-- 页面标题 -->
+      <div class="mb-10">
+        <h1 class="text-2xl lg:text-3xl font-semibold tracking-title">产品中心</h1>
+        <p class="mt-2 text-sm text-weak">探索 STK 全系列产品，找到属于你的本然之选</p>
+      </div>
+
+      <!-- 工具栏：搜索 + 筛选 + 排序 -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-black/10">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- 关键词搜索 (FR-17) -->
+          <div class="relative flex-1 sm:flex-initial">
+            <input type="text" id="prodSearchInput" placeholder="搜索产品名称..." class="pl-9 pr-4 py-2 rounded-lg border border-black/10 bg-cream text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30 w-full sm:w-56" oninput="filterProducts()" />
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-weak" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </div>
+          <!-- 系列筛选 (FR-16) -->
+          <select id="prodSeriesSelect" class="px-3 py-2 rounded-lg border border-black/10 bg-cream text-sm focus:outline-none focus:border-inklt cursor-pointer" onchange="filterProducts()">
+            <option value="">全部系列</option>
+            <option>原木系列</option>
+            <option>软体系列</option>
+            <option>座椅系列</option>
+            <option>收纳系列</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-weak">
+          <span>排序：</span>
+          <select class="px-3 py-1.5 rounded-lg border border-black/10 bg-cream text-sm focus:outline-none cursor-pointer">
+            <option>默认排序</option>
+            <option>价格 ↑</option>
+            <option>价格 ↓</option>
+            <option>最新上架</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 产品网格 (FR-18) -->
+      <div id="productGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      </div>
+
+      <!-- 分页 (FR-19) -->
+      <div id="productPagination" class="mt-10 flex justify-center items-center gap-2">
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist disabled:opacity-30 cursor-pointer transition-colors" onclick="goProdPage(this,-1)" disabled>&lt;</button>
+        <button type="button" class="w-9 h-9 rounded-lg bg-ink text-cream text-sm font-medium cursor-pointer" onclick="goProdPage(this,0)">1</button>
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goProdPage(this,0)">2</button>
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goProdPage(this,0)">3</button>
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goProdPage(this,1)">&gt;</button>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-products -->
+
+
+<!-- ================================================================
+  PAGE 3：新案例展示 (cases)
+================================================================ -->
+<div id="page-cases" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="mb-10">
+        <h1 class="text-2xl lg:text-3xl font-semibold tracking-title">新案例展示</h1>
+        <p class="mt-2 text-sm text-weak">客户实景案例 · 见证本然生活的无限可能</p>
+      </div>
+
+      <!-- 空间类型筛选 (FR-29) -->
+      <div id="caseFilterBar" class="flex items-center gap-2 flex-wrap mb-8 pb-6 border-b border-black/10">
+        <span class="case-filter-tag active px-3 py-1.5 rounded-full text-xs font-medium bg-ink text-cream cursor-pointer transition-all" data-cat="全部" onclick="filterCases('全部',this)">全部</span>
+        <span class="case-filter-tag px-3 py-1.5 rounded-full text-xs font-medium border border-black/10 hover:bg-mist cursor-pointer transition-all" data-cat="客厅" onclick="filterCases('客厅',this)">客厅</span>
+        <span class="case-filter-tag px-3 py-1.5 rounded-full text-xs font-medium border border-black/10 hover:bg-mist cursor-pointer transition-all" data-cat="卧室" onclick="filterCases('卧室',this)">卧室</span>
+        <span class="case-filter-tag px-3 py-1.5 rounded-full text-xs font-medium border border-black/10 hover:bg-mist cursor-pointer transition-all" data-cat="餐厅" onclick="filterCases('餐厅',this)">餐厅</span>
+        <span class="case-filter-tag px-3 py-1.5 rounded-full text-xs font-medium border border-black/10 hover:bg-mist cursor-pointer transition-all" data-cat="书房" onclick="filterCases('书房',this)">书房</span>
+        <span class="case-filter-tag px-3 py-1.5 rounded-full text-xs font-medium border border-black/10 hover:bg-mist cursor-pointer transition-all" data-cat="办公" onclick="filterCases('办公',this)">办公</span>
+      </div>
+
+      <!-- 案例网格 -->
+      <div id="caseGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <a onclick="openCaseDetail(0)" data-idx="0" data-space="客厅" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">客厅</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">城市青年的留白之家</h3>
+            <p class="text-xs text-weak mt-1">客厅 / 120㎡ / 华东 · 2026.06 完工</p>
+          </div>
+        </a>
+        <a onclick="openCaseDetail(1)" data-idx="1" data-space="餐厅" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">餐厅</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">原木质感的三口之家</h3>
+            <p class="text-xs text-weak mt-1">餐厅 / 98㎡ / 华南 · 2026.05 完工</p>
+          </div>
+        </a>
+        <a onclick="openCaseDetail(2)" data-idx="2" data-space="书房" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">书房</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">沉静书房 · 阅读角落</h3>
+            <p class="text-xs text-weak mt-1">书房 / 西南 · 2026.04 完工</p>
+          </div>
+        </a>
+        <a onclick="openCaseDetail(3)" data-idx="3" data-space="卧室" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">卧室</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">温润木质主卧套房</h3>
+            <p class="text-xs text-weak mt-1">卧室 / 85㎡ / 华东 · 2026.03 完工</p>
+          </div>
+        </a>
+        <a onclick="openCaseDetail(4)" data-idx="4" data-space="办公" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">办公</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">极简办公空间</h3>
+            <p class="text-xs text-weak mt-1">办公 / 60㎡ / 华南 · 2026.02 完工</p>
+          </div>
+        </a>
+        <a onclick="openCaseDetail(5)" data-idx="5" data-space="客厅" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">
+          <div class="ph rounded-xl overflow-hidden aspect-[16/10] flex items-end p-5 img-zoom relative">
+            <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-cream/90 text-ink">客厅</span>
+            <span class="text-xs text-cream/80 tracking-sub">实景图集</span>
+          </div>
+          <div class="mt-3">
+            <h3 class="font-medium">开放式客餐一体空间</h3>
+            <p class="text-xs text-weak mt-1">客厅+餐厅 / 140㎡ / 华东 · 2026.01 完工</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- 分页 -->
+      <div id="casePagination" class="mt-10 flex justify-center items-center gap-2">
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist disabled:opacity-30 cursor-pointer transition-colors" onclick="goCasePage(this,-1)" disabled>&lt;</button>
+        <button type="button" class="w-9 h-9 rounded-lg bg-ink text-cream text-sm font-medium cursor-pointer" onclick="goCasePage(this,0)">1</button>
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goCasePage(this,0)">2</button>
+        <button type="button" class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goCasePage(this,1)">&gt;</button>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-cases -->
+
+<!-- ================================================================
+  PAGE：案例详情 (case-detail)
+================================================================ -->
+<div id="page-case-detail" class="page">
+  <section class="py-20 lg:py-24">
+    <div class="mx-auto max-w-5xl px-4 lg:px-8">
+      <button onclick="navigateTo('cases')" class="mb-6 text-sm text-weak hover:text-ink flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0">← 返回案例列表</button>
+      <div id="caseDetailWrap">
+        <div class="ph rounded-2xl overflow-hidden aspect-[21/9] flex items-center justify-center mb-8">
+          <span class="text-sm text-weak tracking-sub">案例主图</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mb-4" id="caseDetailTags"></div>
+        <h1 id="caseDetailTitle" class="text-2xl lg:text-4xl font-semibold tracking-title">案例详情</h1>
+        <p id="caseDetailMeta" class="mt-3 text-sm text-weak"></p>
+        <p id="caseDetailSummary" class="mt-6 text-base leading-relaxed text-ink/80"></p>
+
+        <div class="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-mist rounded-xl p-6">
+            <h3 class="text-base font-semibold mb-3">设计亮点</h3>
+            <ul id="caseDetailHighlights" class="space-y-2 text-sm text-weak"></ul>
+          </div>
+          <div class="bg-mist rounded-xl p-6">
+            <h3 class="text-base font-semibold mb-3">材质与设计师</h3>
+            <p id="caseDetailMaterials" class="text-sm text-weak mb-3"></p>
+            <p id="caseDetailDesigner" class="text-sm text-ink font-medium"></p>
+          </div>
+        </div>
+
+        <div class="mt-10">
+          <h3 class="text-base font-semibold mb-4">实景图集</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 01</span></div>
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 02</span></div>
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 03</span></div>
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 04</span></div>
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 05</span></div>
+            <div class="ph rounded-xl aspect-[4/3] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">实景图 06</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-case-detail -->
+
+
+<!-- ================================================================
+  PAGE 4：新闻中心 (news)
+  FR-30~FR-34：栏目切换/新闻列表/日期格式/已发布状态
+================================================================ -->
+<div id="page-news" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="mb-10">
+        <h1 class="text-2xl lg:text-3xl font-semibold tracking-title">新闻中心</h1>
+        <p class="mt-2 text-sm text-weak">了解 STK 动态与行业趋势</p>
+      </div>
+
+      <!-- 栏目切换 (FR-30) -->
+      <div class="flex gap-6 border-b border-black/10 mb-8">
+        <button class="tab-btn active pb-3 text-sm" data-tab="enterprise" onclick="switchNewsTab('enterprise')">企业新闻</button>
+        <button class="tab-btn pb-3 text-sm text-weak" data-tab="industry" onclick="switchNewsTab('industry')">行业资讯</button>
+      </div>
+
+      <!-- 企业新闻面板 -->
+      <div id="panel-enterprise" class="tab-panel">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center relative">
+              <span class="text-xs text-weak tracking-sub">封面图</span>
+              <span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-inklt/90 text-white">最新</span>
+            </div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.08.10</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 全新原木系列正式发布</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">以可持续北美黑胡桃木与极简线条语言，重新定义都市自然生活。全系产品即日起接受预订。</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.07.15</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 全国第六家体验店正式开业</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">西南地区首家旗舰店落地成都，沉浸式空间陈列涵盖全系列产品线。</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.06.20</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">STK 荣获「年度原创家居设计」奖项</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">在 2026 中国国际家具展上，STK 原木餐桌系列凭借极简设计与工艺细节获得评委一致认可。</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+        </div>
+        <div class="mt-8 flex justify-center items-center gap-2">
+          <button class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist disabled:opacity-30 cursor-pointer transition-colors" disabled>&lt;</button>
+          <button class="w-9 h-9 rounded-lg bg-ink text-cream text-sm font-medium cursor-pointer news-page-btn" onclick="goNewsPage(this,0)">1</button>
+          <button class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors news-page-btn" onclick="goNewsPage(this,0)">2</button>
+          <button class="w-9 h-9 rounded-lg border border-black/10 text-sm hover:bg-mist hover:border-inklt/30 cursor-pointer transition-colors" onclick="goNewsPage(this,1)">&gt;</button>
+        </div>
+      </div>
+
+      <!-- 行业资讯面板 -->
+      <div id="panel-industry" class="tab-panel hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.07.28</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">2026 家居设计趋势：回归材质本身</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">从繁复装饰走向克制表达，消费者更关注触感、耐用性与环保属性。</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.07.05</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">实木家具市场报告：高端需求持续增长</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">据行业协会数据，2026 上半年实木家具细分市场同比增长 18%，年轻客群占比首次超过 40%。</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+          <article onclick="showNewsDetail(this)" class="group bg-cream rounded-xl overflow-hidden shadow-soft hover:shadow-md transition-all cursor-pointer hover:-translate-y-1">
+            <div class="ph-warm aspect-[16/9] flex items-center justify-center"><span class="text-xs text-weak tracking-sub">封面图</span></div>
+            <div class="p-5">
+              <p class="text-xs text-inklt">2026.06.12</p>
+              <h3 class="mt-2 font-medium leading-relaxed group-hover:text-inklt transition-colors">智能家居与传统家具的融合路径探索</h3>
+              <p class="mt-2 text-sm text-weak leading-relaxed line-clamp-2">如何在保留传统家具温润感的同时，融入智能照明、无线充电等现代功能？</p>
+              <span class="mt-3 inline-block text-xs font-medium text-inklt opacity-0 group-hover:opacity-100 transition-opacity">阅读全文 →</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-news -->
+
+
+<!-- ================================================================
+  PAGE 4b：新闻详情页 (news-detail)
+  点击新闻卡片后跳转到此页面展示完整内容
+================================================================ -->
+<div id="page-news-detail" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-3xl px-4 lg:px-8">
+      <!-- 面包屑 + 返回 -->
+      <div class="flex items-center gap-2 mt-8 mb-6 text-sm text-weak">
+        <a onclick="navigateTo('news')" class="hover:text-inklt cursor-pointer transition-colors">← 返回新闻列表</a>
+        <span>/</span>
+        <span id="ndBreadcrumb" class="text-ink">新闻详情</span>
+      </div>
+
+      <!-- 文章内容区 -->
+      <article id="newsDetailContent" class="bg-cream rounded-2xl p-8 lg:p-10 shadow-soft">
+        <p id="ndDate" class="text-sm text-inklt mb-3"></p>
+        <h1 id="ndTitle" class="text-2xl lg:text-3xl font-semibold tracking-title text-ink leading-snug mb-6"></h1>
+        <div id="ndBody" class="text-[15px] leading-relaxed text-ink/80 space-y-4"></div>
+      </article>
+    </div>
+  </section>
+</div><!-- /page-news-detail -->
+
+
+<!-- ================================================================
+  PAGE 2b：产品详情页 (product-detail)
+  点击产品卡片后跳转到此页面展示产品详细信息
+================================================================ -->
+<div id="page-product-detail" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-5xl px-4 lg:px-8">
+      <!-- 面包屑 + 返回 -->
+      <div class="flex items-center gap-2 mt-8 mb-6 text-sm text-weak">
+        <a onclick="navigateTo('products')" class="hover:text-inklt cursor-pointer transition-colors">← 返回产品列表</a>
+        <span>/</span>
+        <span id="pdBreadcrumb" class="text-ink">产品详情</span>
+      </div>
+
+      <!-- 产品详情内容 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- 产品大图 -->
+        <div class="ph-soft rounded-2xl aspect-[4/5] flex items-center justify-center relative overflow-hidden">
+          <span class="text-sm text-weak tracking-sub">产品主图</span>
+          <span id="pdSeriesTag" class="absolute top-4 left-4 text-xs px-3 py-1 rounded-full bg-ink/80 text-cream"></span>
+        </div>
+        <!-- 产品信息 -->
+        <div class="flex flex-col">
+          <h1 id="pdTitle" class="text-2xl lg:text-3xl font-semibold tracking-title text-ink"></h1>
+          <p id="pdSubtitle" class="mt-2 text-sm text-weak"></p>
+          <p id="pdPrice" class="mt-4 text-2xl font-bold text-inklt"></p>
+
+          <hr class="my-6 border-black/10" />
+
+          <!-- 详细参数 -->
+          <div id="pdSpecs" class="space-y-3 text-sm"></div>
+
+          <hr class="my-6 border-black/10" />
+
+          <!-- 产品描述 -->
+          <div id="pdDesc" class="text-[15px] leading-relaxed text-ink/80 space-y-3"></div>
+
+          <!-- 操作按钮 -->
+          <div class="mt-8 flex gap-3">
+            <a onclick="navigateTo('appointment')" class="inline-flex items-center justify-center px-7 py-3 bg-ink text-cream rounded-lg font-medium hover:bg-ink/90 transition-colors cursor-pointer">预约到店体验</a>
+            <a onclick="navigateTo('contact')" class="inline-flex items-center justify-center px-7 py-3 border border-ink/20 text-ink rounded-lg font-medium hover:bg-mist transition-colors cursor-pointer">咨询客服</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-product-detail -->
+
+
+<!-- ================================================================
+  PAGE 5：招聘入口 (jobs)
+  FR-35~FR-38：分类切换/职位列表/急招标签/仅招聘中
+================================================================ -->
+<div id="page-jobs" class="page">
+  <section class="pb-20">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="mb-10">
+        <h1 class="text-2xl lg:text-3xl font-semibold tracking-title">加入 STK</h1>
+        <p class="mt-2 text-sm text-weak">与我们一同创造有温度的家居作品</p>
+      </div>
+
+      <!-- 分类切换 (FR-35) -->
+      <div class="flex gap-6 border-b border-black/10 mb-8">
+        <button class="tab-btn active pb-3 text-sm" data-jobtab="social" onclick="switchJobTab('social')">社会招聘</button>
+        <button class="tab-btn pb-3 text-sm text-weak" data-jobtab="campus" onclick="switchJobTab('campus')">校园招聘</button>
+      </div>
+
+      <!-- 社会招聘面板 -->
+      <div id="jobpanel-social" class="job-panel">
+        <div id="joblist-social" class="space-y-4"></div>
+      </div>
+
+      <!-- 校园招聘面板 -->
+      <div id="jobpanel-campus" class="job-panel hidden">
+        <div id="joblist-campus" class="space-y-4"></div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-jobs -->
+
+<!-- ================================================================
+  PAGE：职位详情 (job-detail)
+================================================================ -->
+<div id="page-job-detail" class="page">
+  <section class="py-20 lg:py-24">
+    <div class="mx-auto max-w-3xl px-4 lg:px-8">
+      <button onclick="navigateTo('jobs')" class="mb-6 text-sm text-weak hover:text-ink flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0">← 返回职位列表</button>
+      <div id="jobDetailHeader">
+        <h1 id="jobDetailTitle" class="text-2xl lg:text-3xl font-semibold tracking-title">职位详情</h1>
+        <div id="jobDetailMeta" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-weak"></div>
+      </div>
+      <div id="jobDetailBody" class="mt-8 space-y-6 text-sm leading-relaxed text-weak"></div>
+
+      <!-- 投简历 -->
+      <div class="mt-12 border-t border-black/10 pt-10">
+        <h2 class="text-xl font-semibold tracking-sub mb-4">投递简历</h2>
+        <form id="jobApplyForm" class="space-y-5" onsubmit="return submitJobApply(event)">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">姓名 <span class="text-red-500">*</span></label>
+              <input type="text" id="applyName" required placeholder="请输入姓名" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">联系电话 <span class="text-red-500">*</span></label>
+              <input type="tel" id="applyPhone" required pattern="^1[3-9]\d{9}$" placeholder="请输入11位手机号"
+                oninvalid="this.setCustomValidity('请输入正确的11位手机号码')"
+                oninput="this.setCustomValidity('')"
+                class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">邮箱</label>
+            <input type="email" id="applyEmail" placeholder="example@email.com" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">简历附件 <span class="text-red-500">*</span></label>
+            <input type="file" id="applyResume" accept=".pdf,.doc,.docx" required
+              class="block w-full text-sm text-weak file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-ink file:text-white file:cursor-pointer hover:file:bg-ink/90" />
+            <p class="text-xs text-weak mt-1.5">支持 PDF / Word，大小不超过 10MB</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">自我推荐 / 备注</label>
+            <textarea id="applyNote" rows="3" maxlength="500" placeholder="简单介绍自己..." class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30 resize-y"></textarea>
+          </div>
+          <button type="submit" class="w-full rounded-md bg-ink py-3 text-sm font-medium text-white shadow-soft hover:bg-ink/90 transition-colors cursor-pointer">提交简历</button>
+        </form>
+        <div id="jobApplySuccess" class="hidden mt-6 p-4 bg-green-50 text-green-700 text-sm rounded-lg">简历已提交成功，我们会在 1–3 个工作日内与您联系。</div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-job-detail -->
+
+
+
+
+<!-- ================================================================
+  PAGE 6：关于我们 (about)
+  FR-39~FR-50：关于STK/发展历程/品牌介绍/在线预约/联系我们
+================================================================ -->
+<div id="page-about-stk" class="page">
+
+  <!-- 4.1 关于STK (FR-39) -->
+  <section id="about-stk" class="py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-2xl lg:text-3xl font-semibold tracking-title">关于 STK 本然家居</h1>
+        <div id="aboutContent" class="mt-6 space-y-4 text-sm lg:text-base leading-loose text-ink/80"></div>
+        <!-- 数据亮点 -->
+        <div class="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="text-center"><p class="text-2xl lg:text-3xl font-semibold text-inklt">10+</p><p class="text-xs text-weak mt-1">年品牌积淀</p></div>
+          <div class="text-center"><p class="text-2xl lg:text-3xl font-semibold text-inklt">1</p><p class="text-xs text-weak mt-1">家直营体验店</p></div>
+          <div class="text-center"><p class="text-2xl lg:text-3xl font-semibold text-inklt">200+</p><p class="text-xs text-weak mt-1">SKU 产品线</p></div>
+          <div class="text-center"><p class="text-2xl lg:text-3xl font-semibold text-inklt">50000+</p><p class="text-xs text-weak mt-1">服务家庭</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================
+  PAGE：发展历程 (timeline)
+================================================================ -->
+<div id="page-timeline" class="page">
+
+  <!-- 4.2 发展历程 (FR-40)：时间轴展示 -->
+  <section id="timeline" class="py-16 bg-mist">
+    <div class="mx-auto max-w-4xl px-4 lg:px-8">
+      <h2 class="text-2xl lg:text-3xl font-semibold tracking-title text-center mb-12">发展历程</h2>
+      <div class="relative pl-8 space-y-10 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-inklt/30">
+        <div class="relative">
+          <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-inklt ring-4 ring-mist"></div>
+          <p class="text-sm font-semibold text-inklt">2015</p>
+          <h3 class="font-semibold mt-1">STK 品牌创立</h3>
+          <p class="mt-1 text-sm text-weak leading-relaxed">成立工作室，发布首款原木餐桌系列，确立「本然」设计哲学。</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-inklt ring-4 ring-mist"></div>
+          <p class="text-sm font-semibold text-inklt">2018</p>
+          <h3 class="font-semibold mt-1">首家体验店开业</h3>
+          <p class="mt-1 text-sm text-weak leading-relaxed">华东地区首家体验店正式营业，开启线下沉浸式体验模式。</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-inklt ring-4 ring-mist"></div>
+          <p class="text-sm font-semibold text-inklt">2021</p>
+          <h3 class="font-semibold mt-1">智能制造基地投产</h3>
+          <p class="mt-1 text-sm text-weak leading-relaxed">数字化生产基地投入使用，产能提升 300%，品质一致性大幅改善。</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-inklt ring-4 ring-mist"></div>
+          <p class="text-sm font-semibold text-inklt">2024</p>
+          <h3 class="font-semibold mt-1">全国布局加速</h3>
+          <p class="mt-1 text-sm text-weak leading-relaxed">华南、西南多家体验店相继开业，服务网络覆盖三大区域。</p>
+        </div>
+        <div class="relative">
+          <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-ink ring-4 ring-mist"></div>
+          <p class="text-sm font-semibold text-ink">2026</p>
+          <h3 class="font-semibold mt-1">全新品牌升级 & 原木系列发布</h3>
+          <p class="mt-1 text-sm text-weak leading-relaxed">视觉体系全面升级为墨绿色系；北美黑胡桃木原木系列正式发布。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================
+  PAGE：品牌介绍 (brand)
+================================================================ -->
+<div id="page-brand" class="page">
+
+  <!-- 4.3 品牌介绍 (FR-41) -->
+  <section id="brand" class="py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">品牌理念</h2>
+          <div id="brandContent" class="mt-4 text-sm lg:text-base leading-loose text-ink/80"></div>
+          <div class="mt-6 flex gap-4">
+            <div class="text-center"><div class="w-12 h-12 rounded-full bg-ink/5 flex items-center justify-center mx-auto mb-2"><svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div><p class="text-xs font-medium">真实材质</p></div>
+            <div class="text-center"><div class="w-12 h-12 rounded-full bg-ink/5 flex items-center justify-center mx-auto mb-2"><svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16M4 10h16M4 15h16"/></svg></div><p class="text-xs font-medium">克制设计</p></div>
+            <div class="text-center"><div class="w-12 h-12 rounded-full bg-ink/5 flex items-center justify-center mx-auto mb-2"><svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><p class="text-xs font-medium">考究工艺</p></div>
+          </div>
+        </div>
+        <div class="ph-warm rounded-2xl aspect-[4/3] flex items-center justify-center">
+          <span class="text-sm text-weak tracking-sub">品牌故事配图</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================
+  PAGE：在线预约 (appointment)
+================================================================ -->
+<div id="page-appointment" class="page">
+
+  <!-- 4.4 在线预约表单 (FR-42 ~ FR-46) -->
+  <section id="appointment" class="py-20 lg:py-24 bg-mist">
+    <div class="mx-auto max-w-2xl px-4 lg:px-8">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">预约到店参观</h2>
+        <p class="mt-2 text-sm text-weak">留下您的联系方式，我们将在 1–2 个工作日内与您联系</p>
+      </div>
+      <form id="apptForm" class="bg-cream rounded-2xl p-6 lg:p-10 shadow-soft space-y-5" onsubmit="return submitAppointment(event)">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium mb-1.5">姓名 <span class="text-red-500">*</span></label>
+            <input type="text" id="apptName" required placeholder="请输入您的姓名" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">联系电话 <span class="text-red-500">*</span></label>
+            <input type="tel" id="apptPhone" required pattern="^1[3-9]\d{9}$" placeholder="请输入11位手机号"
+              oninvalid="this.setCustomValidity('请输入正确的11位手机号码')"
+              oninput="this.setCustomValidity('')"
+              class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1.5">预约时间</label>
+            <input type="date" id="apptDate" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">意向产品/系列（选填）</label>
+          <input type="text" id="apptProduct" placeholder="如：原木系列餐桌" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">备注（选填）</label>
+          <textarea id="apptNote" rows="3" placeholder="其他需要说明的内容..." class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30 resize-y"></textarea>
+        </div>
+        <div id="apptSuccessMsg" style="display:none;" class="p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm text-center">
+          ✅ 预约提交成功！我们将在 1–2 个工作日内联系您。
+        </div>
+        <p class="text-xs text-weak">提交即表示同意我们收集以上信息用于联系您。个人信息仅用于业务联系，不做非法使用。</p>
+        <button type="submit" id="apptSubmitBtn" class="w-full rounded-md bg-inklt py-3 text-sm font-medium text-white shadow-soft hover:bg-ink transition-colors cursor-pointer">提交预约</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================
+  PAGE：联系我们 (contact)
+================================================================ -->
+<!-- ================================================================
+  PAGE：联系我们 (contact)
+================================================================ -->
+<div id="page-contact" class="page">
+
+  <!-- 4.5 联系我们 (FR-47 ~ FR-50) -->
+  <section id="contact" class="py-20 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- 左侧：门店信息（仅此一家，无需选择） -->
+        <div>
+          <h2 class="text-2xl lg:text-3xl font-semibold tracking-title">联系我们</h2>
+          <p class="text-sm text-weak mt-2">STK 本然家居目前设有一家线下体验旗舰店，欢迎预约到店。</p>
+
+          <div class="mt-6 space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-lg bg-ink/5 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm">门店名称</h3>
+                <p class="text-sm text-weak mt-1">STK本然家居 · 上海旗舰店</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-lg bg-ink/5 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm">门店地址</h3>
+                <p class="text-sm text-weak mt-1">上海市静安区南京西路 1268 号 恒隆广场 1–2F</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-lg bg-ink/5 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm">门店电话</h3>
+                <p class="text-sm text-weak mt-1">021-8888-6666</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-lg bg-ink/5 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm">营业时间</h3>
+                <p class="text-sm text-weak mt-1">周一至周日 10:00 – 20:00</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-cream rounded-xl border border-black/5 text-sm text-weak leading-relaxed">
+            <span class="font-medium text-ink">全国客服热线：</span>
+            <span class="ml-1">400-8888-0000（工作日 9:00–18:00），服务全国统一订单与咨询。</span>
+          </div>
+        </div>
+
+        <!-- 右侧：在线留言 -->
+        <div>
+          <h3 class="text-xl font-semibold tracking-sub mb-6">在线留言</h3>
+          <form class="space-y-5" onsubmit="event.preventDefault(); alert('留言提交成功！\n\n（原型演示：实际将调用 POST /api/messages 接口落库）');">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">姓名 <span class="text-red-500">*</span></label>
+              <input type="text" required placeholder="请输入姓名" class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">联系电话 <span class="text-red-500">*</span></label>
+              <input type="tel" required pattern="^1[3-9]\d{9}$" placeholder="请输入11位手机号"
+              oninvalid="this.setCustomValidity('请输入正确的11位手机号码')"
+              oninput="this.setCustomValidity('')"
+              class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">留言内容 <span class="text-red-500">*</span></label>
+              <textarea required rows="4" maxlength="500" placeholder="请描述您的需求或问题..." class="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white text-sm focus:outline-none focus:border-inklt focus:ring-1 focus:ring-inklt/30 resize-y"></textarea>
+            </div>
+            <p class="text-xs text-weak">提交即表示同意我们收集以上信息用于联系您。</p>
+            <button type="submit" class="w-full rounded-md bg-ink py-3 text-sm font-medium text-white shadow-soft hover:bg-ink/90 transition-colors cursor-pointer">提交留言</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-contact -->
+
+
+
+
+<!-- ================================================================
+  PAGE 7：服务支持 (support)
+  FR-51~FR-54：售后政策/FAQ
+================================================================ -->
+<div id="page-policy" class="page">
+
+  <!-- 5.1 售后服务政策 (FR-51) -->
+  <section id="policy" class="py-20 lg:py-24">
+    <div class="mx-auto max-w-4xl px-4 lg:px-8">
+      <h1 class="text-2xl lg:text-3xl font-semibold tracking-title text-center mb-10">售后服务政策</h1>
+      <div id="policyContent" class="bg-cream rounded-2xl p-6 lg:p-10 shadow-soft space-y-6 text-sm lg:text-base leading-loose text-ink/80"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ================================================================
+  PAGE：常见问题 FAQ (faq)
+================================================================ -->
+<div id="page-faq" class="page">
+
+  <!-- 5.2 常见问题 FAQ (FR-52) -->
+  <section id="faq" class="py-20 lg:py-24 bg-mist">
+    <div class="mx-auto max-w-3xl px-4 lg:px-8">
+      <h2 class="text-2xl lg:text-3xl font-semibold tracking-title text-center mb-10">常见问题 FAQ</h2>
+      <div class="space-y-3" id="faqList"></div>
+    </div>
+  </section>
+</div>
+
+
+
+
+
+</main><!-- /#app -->
+
+
+<!-- ============================ 页脚 (FR-03) ============================ -->
+<footer class="bg-ink text-cream/80">
+  <div class="mx-auto max-w-7xl px-4 lg:px-8 py-14">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-cream text-ink text-xs font-bold tracking-title">STK</span>
+          <span class="font-semibold tracking-title text-cream">本然家居</span>
+        </div>
+        <p class="text-sm text-cream/70 leading-relaxed">原创设计家居品牌，让生活回归本然的质感。</p>
+      </div>
+      <div>
+        <h4 class="text-sm font-medium text-cream tracking-sub mb-4">快捷导航</h4>
+        <ul class="space-y-2 text-sm text-cream/70">
+          <li><a onclick="navigateTo('home')" class="hover:text-cream cursor-pointer">首页</a></li>
+          <li><a onclick="navigateTo('products')" class="hover:text-cream cursor-pointer">产品中心</a></li>
+          <li><a onclick="navigateTo('cases')" class="hover:text-cream cursor-pointer">新案例展示</a></li>
+          <li><a onclick="navigateTo('news')" class="hover:text-cream cursor-pointer">新闻中心</a></li>
+          <li><a onclick="navigateTo('jobs')" class="hover:text-cream cursor-pointer">招聘入口</a></li>
+          <li><a onclick="navigateTo('about-stk')" class="hover:text-cream cursor-pointer">关于我们</a></li>
+          <li><a onclick="navigateTo('policy')" class="hover:text-cream cursor-pointer">服务支持</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-medium text-cream tracking-sub mb-4">联系方式</h4>
+        <ul class="space-y-2 text-sm text-cream/70">
+          <li>全国客服中心</li>
+          <li>400-8888-0000</li>
+          <li>contact@stk.com</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-medium text-cream tracking-sub mb-4">线下门店</h4>
+        <ul class="space-y-2 text-sm text-cream/70">
+          <li>STK本然家居 · 上海旗舰店</li>
+          <li>上海市静安区南京西路 1268 号 恒隆广场 1–2F</li>
+          <li>021-8888-6666</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-10 pt-6 border-t border-cream/15 text-xs text-cream/50">
+      © <span id="footerYear"></span> STK本然家居　·　保留所有权利
+    </div>
+  </div>
+</footer>
+
+
+<!-- ============================ 交互脚本 ============================ -->
+<script>
+// ---- 版权年份 ----
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+// ---- SPA 页面路由 ----
+
+/* ===== 案例数据（实景图集） ===== */
+var _cases = [
+  { idx:0, space:'客厅', title:'城市青年的留白之家', area:'120㎡', region:'华东', date:'2026.06',
+    summary:'以大面积留白与温润木色，打造适合都市青年的轻盈居所。客厅、餐厅、书房一体化布局，让自然光线贯穿每个角落。',
+    tags:['原木','极简','小户型'],
+    highlights:['开放式客餐厅布局','隐藏式收纳系统','全屋低饱和色系','定制木饰面背景墙'],
+    materials:'北美黑胡桃木 / 白色烤漆板 / 亚麻布艺 / 进口木蜡油',
+    designer:'STK 设计顾问 · 林然' },
+  { idx:1, space:'餐厅', title:'原木质感的三口之家', area:'98㎡', region:'华南', date:'2026.05',
+    summary:'围绕一家三口的日常动线设计，餐厅成为家庭情感交流的核心。原木餐桌搭配柔和灯光，营造温暖就餐氛围。',
+    tags:['餐厅','温馨','三口之家'],
+    highlights:['圆桌动线更聚拢','餐边柜一体化设计','可拉伸餐桌应对聚餐','柔和间接照明'],
+    materials:'白橡木 / 岩板 / 磨砂玻璃 / 亚麻布艺',
+    designer:'STK 设计顾问 · 陈木' },
+  { idx:2, space:'书房', title:'沉静书房 · 阅读角落', area:'45㎡', region:'西南', date:'2026.04',
+    summary:'在喧嚣城市中辟出一处安静阅读角。整墙书架、宽幅书桌与舒适单椅，让阅读与工作都成为一种享受。',
+    tags:['书房','阅读','静谧'],
+    highlights:['整墙开放式书架','人体工学阅读椅','桌面隐藏走线','可调色温护眼灯光'],
+    materials:'胡桃木贴皮 / 棉麻 / 金属脚件 / 环保板材',
+    designer:'STK 设计顾问 · 周墨' },
+  { idx:3, space:'卧室', title:'温润木质主卧套房', area:'85㎡', region:'华东', date:'2026.03',
+    summary:'主卧以温润木质与柔软织物为主调，打造让人完全放松的睡眠空间。床、床头柜、衣柜形成完整套房系统。',
+    tags:['卧室','套房','温馨'],
+    highlights:['一体化床头背景','感应式夜灯','衣柜开放格展示','静音门铰系统'],
+    materials:'北美黑胡桃木 / 头层牛皮 / 高支棉麻 / 阻尼五金',
+    designer:'STK 设计顾问 · 林然' },
+  { idx:4, space:'办公', title:'极简办公空间', area:'60㎡', region:'华南', date:'2026.02',
+    summary:'为自由职业者打造的居家办公空间，兼顾专注与舒适。简洁线条、充足收纳与绿植点缀，提升工作效率。',
+    tags:['办公','极简','效率'],
+    highlights:['L型工作台','洞洞板垂直收纳','升降桌兼顾站坐','绿植景观窗景'],
+    materials:'白橡木 / 钢材 / 环保板材 / 绿植系统',
+    designer:'STK 设计顾问 · 陈木' },
+  { idx:5, space:'客厅', title:'开放式客餐一体空间', area:'140㎡', region:'华东', date:'2026.01',
+    summary:'大平层客餐一体化设计，用家具本身划分功能区域。沙发背靠餐桌，形成自然围合，空间通透而有层次。',
+    tags:['大平层','客餐厅','开放'],
+    highlights:['家具软隔断','双面沙发布局','中岛餐桌联动','全景落地窗采光'],
+    materials:'黑胡桃木 / 大理石 / 真皮 / 金属',
+    designer:'STK 设计顾问 · 林然' }
+];
+var _selectedCase = null;
+
+/* ===== 官网产品数据层：读取后台写入的 localStorage（STK 前后台打通联动） ===== */
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+var STK_PRODUCTS_SEED = [
+  {id:'p1', name:'胡桃木餐桌', series:'原木系列', price:4280, status:'上架', recommend:true, sort:1,
+   subtitle:'原木系列 · 北美黑胡桃木',
+   specs:{'系列':'原木系列','材质':'北美黑胡桃木 / FAS级','尺寸':'1600×900×750mm','工艺':'传统榫卯 + CNC精加工','表面处理':'进口木蜡油，环保E0级','产地':'中国·佛山'},
+   detail:'<p>胡桃木餐桌是 STK 原木系列的代表作之一。选用北美进口 FAS 级黑胡桃木，每一块板材都经过严格筛选，保留天然木纹的独特美感。</p><p>桌面采用宽板直拼工艺，边缘做微倒角处理，触感温润而不刮手。桌腿为渐进式收分设计，视觉上轻盈稳固并存。</p><p>适用场景：3-6 人家庭日常用餐、小型家庭聚会、居家办公书写。建议搭配同系列餐椅使用。</p>'},
+  {id:'p2', name:'云朵布艺沙发', series:'软体系列', price:8990, status:'上架', recommend:false, sort:2,
+   subtitle:'软体系列 · 高回弹海绵',
+   specs:{'系列':'软体系列','框架':'落叶松实木框架 + 不锈钢脚','填充':'高回弹海绵（密度45kg/m³）+ 羽绒层','面料':'意大利磨砂布艺，防污耐磨可拆洗','尺寸':'2300×920×840mm（三人位）','质保':'框架5年 / 布面2年'},
+   detail:'<p>云朵布艺沙发以其标志性的「云朵」造型命名——饱满的坐包与靠背仿佛云端般柔软包裹。</p><p>坐感经过上百次调校：底层高回弹海绵提供支撑力，中层羽绒层增添柔软度，外层面料亲肤透气。三种材质的叠加让久坐不累成为可能。</p><p>布套可完全拆洗，方便日常清洁维护。提供多种配色可选，支持定制尺寸。</p>'},
+  {id:'p3', name:'简逸休闲椅', series:'座椅系列', price:null, status:'上架', recommend:false, sort:3,
+   subtitle:'座椅系列 · 白橡木框架',
+   specs:{'系列':'座椅系列','材质':'白橡木框架 + 曲木成型靠背','坐面':'高密度海绵 + 头层牛皮','尺寸':'580×580×780mm（宽×深×高）','承重':'静载150kg','风格':'日式简约 / 北欧融合'},
+   detail:'<p>简逸休闲椅是 STK 座椅系列的入门款，也是最受欢迎的单品之一。设计灵感源自传统明式圈椅，但用更现代的语言重新诠释。</p><p>白橡木框架经蒸汽曲木工艺成型，弧度贴合人体脊椎自然曲线。头层牛皮坐面越用越有光泽，记录着使用者的生活痕迹。</p>'},
+  {id:'p4', name:'原木餐边柜', series:'原木系列', price:3560, status:'上架', recommend:false, sort:4,
+   subtitle:'原木系列 · 黑胡桃木',
+   specs:{'系列':'原木系列','材质':'黑胡桃木 + 桐木内板','尺寸':'1200×400×850mm','储物':'双开门柜体 + 双抽屉 + 开放格','五金':'德国百隆铰链，静音缓冲','表面':'木蜡油涂装'},
+   detail:'<p>原木餐边柜兼顾美观与实用主义。上层开放格适合展示餐具与装饰品，中层抽屉收纳刀叉杂物，下层大容量柜体可存放锅具与备用餐具。</p><p>柜门采用隐形拉手设计，保持正面的简洁完整。内部空间可根据需求自由调整层板高度。</p>'},
+  {id:'p5', name:'北欧风双人床', series:'软体系列', price:12800, status:'上架', recommend:false, sort:5,
+   subtitle:'软体系列 · 实木床架',
+   specs:{'系列':'软体系列','床架':'白蜡木实木床架，榫卯结构','尺寸':'1800×2000mm（1.8米大床）','床板':'加密龙骨 + 多层实木夹板','床头':'软包床头，面料可选','最大承重':'400kg'},
+   detail:'<p>北欧风双人床将北欧设计的简洁线条与东方人对床品「稳」的需求相结合。低矮的床身设计让卧室更显开阔，加粗的床腿确保整床稳固无晃动。</p><p>床头软包提供舒适的阅读倚靠角度，多种面料和颜色可选。床底预留 120mm 空间，扫地机器人可自由进出。</p>'},
+  {id:'p6', name:'极简书架组合', series:'收纳系列', price:2180, status:'上架', recommend:false, sort:6,
+   subtitle:'收纳系列 · 模块化设计',
+   specs:{'系列':'收纳系列','材质':'白橡木 + 钢化玻璃层板（可选）','模块':'标准单元 600mm 宽，可无限拼接','安装':'墙挂式 / 落地式两用','配件':'可加装 LED 灯带 / 卷帘门'},
+   detail:'<p>极简书架组合采用模块化设计理念，每个标准单元宽度 600mm，可根据墙面尺寸自由组合数量与排列方式。</p><p>层板高度可按书籍规格调节，每层承重达 25kg。可选配钢化玻璃层板提升通透感，或加装隐藏式 LED 灯带营造氛围照明。</p>'},
+  {id:'p7', name:'实木餐椅套装', series:'座椅系列', price:3280, status:'上架', recommend:false, sort:7,
+   subtitle:'座椅系列 · 四把装',
+   specs:{'系列':'座椅系列','材质':'白橡木 + 藤编坐面','套装':'4 把装（1 长 3 短）','尺寸':'座面 450×420mm，总高 790mm','特色':'手工藤编，每把纹理独一无二','保养':'藤编部分避免暴晒，干布擦拭即可'},
+   detail:'<p>实木餐椅套装将现代极简框架与传统手工藤编结合。四把椅子包含一把 armchair（带扶手）和三把 side chair，围合出温馨的用餐氛围。</p><p>每把椅子的藤编均由老匠人手工编织，纹理走向各有不同，让每套产品都成为「唯一」。</p>'},
+  {id:'p8', name:'白橡木电视柜', series:'原木系列', price:4680, status:'上架', recommend:false, sort:8,
+   subtitle:'原木系列 · 开放式储物',
+   specs:{'系列':'原木系列','材质':'白橡木','尺寸':'1800×420×450mm','功能':'开放式储物 + 隐藏线缆管理','背板':'可拆卸，便于走线','线孔':'预设过线孔 + 线盖'},
+   detail:'<p>白橡木电视柜专为现代客厅设计。超薄机身（仅 420mm 深）释放更多客厅空间，开放式格局让机顶盒、游戏机等设备一目了然。</p><p>背板可完全拆卸，所有线缆从背后走线后通过预设线孔穿出，配合附赠的线盖实现完美隐藏。</p>'}
+];
+/* 合并：基础信息（name/series/price/status 等）优先用后台写入的 storage，规格/详情文案用种子补全 */
+function getSiteProducts(){
+  var seed = STK_PRODUCTS_SEED;
+  var raw = lsGet('stk_products');
+  if(!raw) return seed.slice();
+  try {
+    var stored = JSON.parse(raw);
+    var byName = {};
+    seed.forEach(function(p){ byName[p.name] = p; });
+    return stored.map(function(s){
+      var base = byName[s.name] || {};
+      return Object.assign({}, base, {
+        id: base.id || ('s_' + s.name),
+        name: s.name,
+        series: s.series || base.series,
+        price: (s.price === undefined ? base.price : s.price),
+        recommend: s.recommend,
+        status: s.status,
+        sort: s.sort || base.sort,
+        subtitle: base.subtitle,
+        specs: base.specs,
+        detail: base.detail
+      });
+    });
+  } catch(e){ return seed.slice(); }
+}
+/* 当前展示列表（已过滤上架 + 应用筛选/搜索），供分页与详情使用 */
+var _siteProductsView = [];
+var _prodPage = 1;
+function renderSiteProducts(){
+  var grid = document.getElementById('productGrid');
+  if(!grid) return;
+  var seriesSel = document.getElementById('prodSeriesSelect');
+  var kwInput = document.getElementById('prodSearchInput');
+  var series = seriesSel ? seriesSel.value : '';
+  var kw = kwInput ? kwInput.value.trim().toLowerCase() : '';
+  var list = getSiteProducts().filter(function(p){
+    if(p.status !== '上架') return false;
+    var m1 = !series || p.series === series;
+    var m2 = !kw || (p.name || '').toLowerCase().indexOf(kw) !== -1;
+    return m1 && m2;
+  });
+  list.sort(function(a,b){ return (a.sort||99)-(b.sort||99); });
+  _siteProductsView = list;
+  _prodPage = 1;
+  if(!list.length){
+    grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#999;padding:40px 0;">暂无匹配产品</p>';
+  } else {
+    grid.innerHTML = list.map(function(p){
+      var priceTxt = p.price ? '¥ ' + Number(p.price).toLocaleString() : '价格面议';
+      return '<div onclick="showProductDetail(\''+p.id+'\')" class="group cursor-pointer block card-interactive bg-cream rounded-xl overflow-hidden">'
+        + '<div class="ph-soft rounded-xl overflow-hidden aspect-[4/5] flex items-center justify-center img-zoom relative">'
+        + '<span class="text-xs text-weak tracking-sub">产品主图</span>'
+        + '<span class="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded bg-ink/80 text-cream">'+p.series+'</span></div>'
+        + '<div class="mt-3"><h3 class="font-medium">'+p.name+'</h3>'
+        + '<p class="text-xs text-weak mt-0.5">'+p.subtitle+'</p>'
+        + '<p class="text-sm text-inklt mt-1 font-medium">'+priceTxt+'</p></div></div>';
+    }).join('');
+  }
+  applyProdPageDisplay();
+  updateProdPager();
+}
+function updateProdPager(){
+  var pager = document.getElementById('productPagination');
+  if(!pager) return;
+  var perPage = 3;
+  var total = Math.max(1, Math.ceil(_siteProductsView.length / perPage));
+  var btns = pager.querySelectorAll('button');
+  btns.forEach(function(b){
+    b.classList.remove('bg-ink','text-cream','font-medium');
+    b.classList.add('border','border-black/10');
+    b.disabled = false;
+    b.style.display = '';
+  });
+  for(var i=1;i<btns.length-1;i++){
+    btns[i].textContent = String(i);
+    btns[i].style.display = (i <= total) ? '' : 'none';
+  }
+  var cur = _prodPage;
+  if(btns[cur] && cur <= total){
+    btns[cur].classList.add('bg-ink','text-cream','font-medium');
+    btns[cur].classList.remove('border','border-black/10');
+  }
+  if(btns[0]) btns[0].disabled = (cur <= 1);
+  if(btns[btns.length-1]) btns[btns.length-1].disabled = (cur >= total);
+}
+function applyProdPageDisplay(){
+  var grid = document.getElementById('productGrid');
+  if(!grid) return;
+  var perPage = 3;
+  var cards = grid.querySelectorAll(':scope > div');
+  cards.forEach(function(card,i){
+    card.style.display = (i >= (_prodPage-1)*perPage && i < _prodPage*perPage) ? '' : 'none';
+  });
+}
+/* 实时联动：后台修改产品并写入 storage 后，官网自动刷新（同源标签页） */
+window.addEventListener('storage', function(e){
+  if(e.key === 'stk_products'){ renderSiteProducts(); }
+});
+
+let currentPage = 'home';
+const pages = ['home','products','cases','case-detail','news','news-detail','product-detail','jobs','job-detail','about-stk','timeline','brand','appointment','contact','policy','faq'];
+
+function navigateTo(pageId, noScrollTop) {
+  if (!pages.includes(pageId)) return;
+  // 隐藏所有页面
+  pages.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.classList.remove('active');
+  });
+  // 显示目标页面
+  const target = document.getElementById('page-' + pageId);
+  if (target) target.classList.add('active');
+  currentPage = pageId;
+
+  // 渲染职位/案例详情页（若进入）
+  if(pageId === 'job-detail'){ renderJobDetail(); }
+  if(pageId === 'case-detail'){ renderCaseDetail(); }
+
+  // 切回首页时复位轮播，避免隐藏期间计时器累积导致画面异常
+  if(pageId === 'home' && window._carousel && window._carousel.reset){ window._carousel.reset(); }
+  // 离开首页时暂停轮播，避免后台持续运行
+  if(pageId !== 'home' && window._carousel && window._carousel.stop){ window._carousel.stop(); }
+  // 招聘页渲染来自后台的数据
+  if(pageId === 'jobs'){ renderJobs(); }
+
+  // 更新导航高亮
+  document.querySelectorAll('[data-nav]').forEach(l => l.classList.remove('active'));
+  const aboutSubs = ['about-stk','timeline','brand','appointment','contact'];
+  const supportSubs = ['policy','faq'];
+  let navKey = pageId;
+  if(pageId === 'cases') navKey = 'products';
+  else if(aboutSubs.includes(pageId)) navKey = 'about';
+  else if(supportSubs.includes(pageId)) navKey = 'support';
+  document.querySelectorAll('[data-nav="' + navKey + '"]').forEach(l => l.classList.add('active'));
+
+  // 滚动到顶部（除非调用方指定不滚顶，用于子板块锚点跳转）
+  if (!noScrollTop) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  // 关闭移动端菜单
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (mobileMenu && !mobileMenu.classList.contains('hidden')) mobileMenu.classList.add('hidden');
+  renderSyncedContent();
+}
+
+
+/* ===== 从后台同步的单页内容渲染 ===== */
+const FE_CONTENT_PREFIX = 'STK_CONTENT_';
+function feContentKey(k){ return FE_CONTENT_PREFIX + k.toUpperCase(); }
+function feLoadContent(key){
+  try { return localStorage.getItem(feContentKey(key)); } catch(e){ return null; }
+}
+const feContentDefault = {
+  about: "STK本然家居成立于 2015 年，是一家专注于原创设计的家居品牌。我们从「让生活回归本然」的理念出发，致力于用克制的设计语言和优质的天然材料，为每一个家庭创造有温度的居住空间。\n\n经过十余年的发展，STK 已形成覆盖客厅、餐厅、卧室、书房等全场景的产品矩阵。我们的设计团队坚持原创路线，每一件产品都经过反复的人体工程学验证与材料测试。\n\n目前，STK 在上海设有 1 家直营体验旗舰店，地址位于静安区南京西路 1268 号 恒隆广场。未来我们将持续打磨产品与服务，让更多家庭感受到「本然」的力量。",
+  brand: "「本然」，是生活的本来面目。\n\n我们相信，最好的家居不是最昂贵的，而是最适合你的。它不喧哗、不抢戏，却能在日常的每一次触碰中传递温度。\n\nSTK 的每件作品都遵循三条原则：材质真实——选用可溯源的天然木材与环保面料；设计克制——去除一切不必要的装饰，让功能与美感自然统一；工艺考究——每一道工序都经得起时间的检验。",
+  policy: "一、质保范围\nSTK 出售的所有家具产品均享受自交付之日起 五年质保（框架结构）、两年质保（表面涂层、软包面料）。质保期内因材料或工艺缺陷导致的问题，我们将免费维修或更换。\n\n二、质保范围外\n正常使用产生的磨损（如木质表面细微划痕、布艺自然老化）\n因不当使用、意外撞击、自行拆改造成的损坏\n超出质保期限的维修需求（可提供有偿服务）\n\n三、售后服务流程\n通过本页「常见问题 FAQ」或拨打客服热线反馈问题\n客服将在 24 小时内响应并安排上门检测（视情况）\n确认问题后出具维修方案，一般 7–15 个工作日内完成\n维修完成后进行回访确认\n\n四、退换货说明\n产品交付后 7 天内，如存在质量问题可申请退换货；非质量问题的退换需保持产品完好且承担往返运费。定制类产品不支持无理由退货。\n\n本政策最终解释权归 STK 本然家居所有。如有疑问请联系客服：400-8888-0000。",
+  faq: JSON.stringify([
+    {q:"产品的保修期是多久？",a:"框架结构享有五年质保，表面涂层和软包面料享有两年质保。具体以产品随附的质保卡为准。"},
+    {q:"如何预约到店参观？",a:"您可以通过「关于我们」→「在线预约」表单提交预约信息，或直接拨打客服热线 400-8888-0000。我们将在 1–2 个工作日内与您确认预约时间。"},
+    {q:"是否支持定制尺寸或颜色？",a:"部分产品支持有限范围的定制服务（如尺寸微调、面料颜色选择）。具体请咨询客服或在到店体验时与设计师沟通。"},
+    {q:"配送和安装怎么收费？",a:"各体验店所在城市免费配送安装；其他地区根据距离收取配送费（下单时自动计算）。大宗订单可享配送优惠，详询客服。"},
+    {q:"如何查询我的订单或预约进度？",a:"您可以拨打客服热线并提供预留的手机号码，客服将为您查询最新的订单或预约处理进度。"}
+  ])
+};
+function nl2p(text){
+  var paras = text.split(/\n\n+/);
+  return paras.map(function(p){ return '<p>' + p.replace(/\n/g, '<br/>') + '</p>'; }).join('');
+}
+function renderSyncedContent(){
+  var aboutEl = document.getElementById('aboutContent');
+  if(aboutEl){
+    var aboutText = feLoadContent('about') || feContentDefault.about;
+    aboutEl.innerHTML = nl2p(aboutText);
+  }
+  var brandEl = document.getElementById('brandContent');
+  if(brandEl){
+    var brandText = feLoadContent('brand') || feContentDefault.brand;
+    brandEl.innerHTML = nl2p(brandText);
+  }
+  var policyEl = document.getElementById('policyContent');
+  if(policyEl){
+    var policyText = feLoadContent('policy') || feContentDefault.policy;
+    policyEl.innerHTML = nl2p(policyText).replace(/<p>([一二三四五六七八九十]+、[^<]+)<\/p>/g, '<h3 class="font-semibold text-ink text-base lg:text-lg">$1</h3>');
+  }
+  var faqEl = document.getElementById('faqList');
+  if(faqEl){
+    var faqRaw = feLoadContent('faq') || feContentDefault.faq;
+    var faqs = [];
+    try { faqs = JSON.parse(faqRaw); } catch(e){ faqs = JSON.parse(feContentDefault.faq); }
+    if(!Array.isArray(faqs)) faqs = JSON.parse(feContentDefault.faq);
+    faqs = faqs.filter(function(item){ return item.status !== '停用'; });
+    faqEl.innerHTML = faqs.map(function(item){
+      return '<div class="faq-item bg-cream rounded-xl shadow-soft overflow-hidden cursor-pointer" onclick="this.classList.toggle(&quot;open&quot;)">'+
+        '<div class="flex items-center justify-between p-5">'+
+          '<h3 class="font-medium text-sm lg:text-base pr-4">'+item.q+'</h3>'+
+          '<svg class="faq-icon w-5 h-5 text-weak shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12M6 12h12"/></svg>'+
+        '</div>'+
+        '<div class="faq-answer px-5 pb-5"><p class="text-sm text-weak leading-relaxed">'+(item.a || '').replace(/\n/g,'<br/>')+'</p></div>'+
+      '</div>';
+    }).join('');
+  }
+}
+/* ===== /前台内容同步 ===== */
+
+
+// 页面内锚点滚动（用于关于我们/服务支持的子板块）
+function scrollToSection(sectionId) {
+  const el = document.getElementById(sectionId);
+  if (el) {
+    // 延迟等待页面切换动画完成后再滚动
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 350);
+  }
+}
+
+// ---- 移动端汉堡菜单 ----
+const menuBtn = document.getElementById('menuBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+menuBtn?.addEventListener('click', () => {
+  const open = mobileMenu.classList.toggle('hidden') === false;
+  menuBtn.setAttribute('aria-expanded', String(open));
+});
+
+// ---- 新闻栏目切换 ----
+function switchNewsTab(tab) {
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('[data-tab="' + tab + '"]');
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  const panel = document.getElementById('panel-' + tab);
+  if (panel) panel.classList.remove('hidden');
+}
+
+var _jobsSeed = [
+  {name:'高级家具设计师', category:'社会招聘', city:'上海', type:'全职', urgent:true, status:'招聘中', date:'2026.08.01',
+   duty:'1. 负责家具产品的外观与结构设计；2. 参与新品立项、材料选型与工艺评估；3. 输出产品图纸、工艺文件及打样跟进。',
+   require:'1. 工业设计、家具设计等相关专业本科及以上学历；2. 3 年以上家具设计经验，熟悉实木与软体工艺；3. 熟练使用 Rhino / SolidWorks / CAD 等设计软件。'},
+  {name:'新媒体运营专员', category:'社会招聘', city:'上海', type:'全职', urgent:false, status:'招聘中', date:'2026.07.20',
+   duty:'1. 负责微信公众号、小红书、抖音等平台内容策划与发布；2. 监测数据并输出运营周报；3. 配合市场活动进行线上传播。',
+   require:'1. 1–3 年新媒体运营经验，有家居/生活方式类目经验优先；2. 具备文案、拍摄与基础剪辑能力；3. 对数据敏感，善于复盘优化。'},
+  {name:'品质管理工程师', category:'社会招聘', city:'上海', type:'全职', urgent:false, status:'招聘中', date:'2026.07.10',
+   duty:'1. 负责家具生产过程的质量管控、工艺标准制定与供应商质量管理；2. 建立并完善来料、制程、成品检验标准；3. 处理客诉问题，推动质量持续改进。',
+   require:'1. 机械、材料、工业工程等相关专业本科及以上学历；2. 3 年以上家居或制造业品质管理经验；3. 熟悉 ISO 质量管理体系与常用检测方法。'},
+  {name:'管培生（产品设计方向）', category:'校园招聘', city:'上海', type:'校招', urgent:false, status:'招聘中', date:'2026.09.01',
+   duty:'1. 参与产品设计全流程，包括用户调研、概念草图、建模渲染；2. 协助设计总监完成季度新品开发；3. 整理设计资料与样品管理。',
+   require:'1. 2026 届应届毕业生，工业设计、产品设计等相关专业；2. 热爱家居设计，有完整作品集；3. 学习能力强，具备良好的沟通协作能力。'},
+  {name:'管培生（市场营销方向）', category:'校园招聘', city:'上海', type:'校招', urgent:false, status:'招聘中', date:'2026.09.01',
+   duty:'1. 协助品牌市场部门完成营销策划与执行；2. 参与线上线下活动创意、物料制作与效果复盘；3. 跟踪家居行业趋势，输出竞品分析报告。',
+   require:'1. 2026 届应届毕业生，市场营销、广告学、传播学等相关专业优先；2. 对家居生活方式有热情，具备良好的沟通与执行力；3. 有学生会、社团或相关实习经验者优先。'}
+];
+function getJobs(){
+  var s = lsGet('stk_jobs');
+  if(s){ try { var arr = JSON.parse(s); if(Array.isArray(arr) && arr.length) return arr; }catch(e){} }
+  return _jobsSeed;
+}
+function renderJobs(){
+  var list = getJobs().filter(function(j){ return j.status === '招聘中'; });
+  var social = list.filter(function(j){ return j.category === '社会招聘'; });
+  var campus = list.filter(function(j){ return j.category === '校园招聘'; });
+  var locIcon = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  var typeIcon = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.9 23.9 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>';
+  var dateIcon = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
+  function card(j, idx, listId){
+    var tag = '';
+    if(j.category === '校园招聘') tag = '<span class="text-[11px] px-2 py-0.5 rounded bg-inklt/10 text-inklt font-medium">校招</span>';
+    else if(j.urgent) tag = '<span class="text-[11px] px-2 py-0.5 rounded bg-red-50 text-red-600 font-medium">急招</span>';
+    return '<div onclick="showJobDetail(\''+listId+'\','+idx+')" class="bg-cream rounded-xl p-5 lg:p-6 shadow-soft hover:shadow-lg transition-all cursor-pointer group hover:-translate-y-0.5">'+
+      '<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">'+
+        '<div class="flex-1">'+
+          '<div class="flex items-center gap-2 flex-wrap">'+
+            '<h3 class="font-semibold text-lg group-hover:text-inklt transition-colors">'+escapeHtml(j.name)+'</h3>'+tag+'</div>'+
+          '<div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-weak">'+
+            '<span class="flex items-center gap-1">'+locIcon+escapeHtml(j.city)+'</span>'+
+            '<span class="flex items-center gap-1">'+typeIcon+escapeHtml(j.type)+'</span>'+
+            '<span class="flex items-center gap-1">'+dateIcon+escapeHtml(j.date)+' 发布</span>'+
+          '</div>'+
+        '</div>'+
+        '<span class="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-inklt hover:gap-2 transition-all">查看详情 →</span>'+
+      '</div>'+
+    '</div>';
+  }
+  var sHtml = social.map(function(j,i){ return card(j,i,'social'); }).join('');
+  var cHtml = campus.map(function(j,i){ return card(j,i,'campus'); }).join('');
+  var sEl = document.getElementById('joblist-social');
+  var cEl = document.getElementById('joblist-campus');
+  if(sEl) sEl.innerHTML = sHtml || '<p class="text-sm text-weak py-8 text-center">暂无社会招聘职位</p>';
+  if(cEl) cEl.innerHTML = cHtml || '<p class="text-sm text-weak py-8 text-center">暂无校园招聘职位</p>';
+}
+
+// ---- 招聘分类切换 ----
+function switchJobTab(tab) {
+  document.querySelectorAll('[data-jobtab]').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('[data-jobtab="' + tab + '"]');
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.job-panel').forEach(p => p.classList.add('hidden'));
+  const panel = document.getElementById('jobpanel-' + tab);
+  if (panel) panel.classList.remove('hidden');
+}
+
+// ---- 轮播 (FR-08) —— 无限循环：右箭头始终向前，左箭头始终向后，边界一键循环 ----
+(function(){
+  const track = document.getElementById('carouselTrack');
+  const dotsContainer = document.getElementById('dotsContainer');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if (!track || !dotsContainer) return;
+
+  // 克隆首尾幻灯片实现无缝循环
+  const realSlides = Array.from(track.querySelectorAll('.carousel-slide'));
+  const totalReal = realSlides.length;
+  if (totalReal === 0) return;
+  const firstClone = realSlides[0].cloneNode(true);
+  const lastClone = realSlides[totalReal - 1].cloneNode(true);
+  firstClone.setAttribute('aria-hidden','true');
+  lastClone.setAttribute('aria-hidden','true');
+  track.insertBefore(lastClone, realSlides[0]);
+  track.appendChild(firstClone);
+
+  const slides = track.querySelectorAll('.carousel-slide');
+  let current = 1;   // 0=克隆最后一张, 1=真实第一张, totalReal=真实最后一张, totalReal+1=克隆第一张
+  let timer = null;
+  let isTransitioning = false;
+  const TRANS_DUR = 450; // 与 CSS transition 一致
+
+  function setTransform(idx, animate){
+    if(!animate) track.classList.add('no-trans');
+    track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+    if(!animate){
+      void track.offsetWidth;
+      track.classList.remove('no-trans');
+    }
+  }
+
+  function updateDots(){
+    const realIdx = (current - 1 + totalReal) % totalReal;
+    dotsContainer.querySelectorAll('.dot-btn').forEach(function(d, i){
+      d.classList.toggle('active', i === realIdx);
+    });
+  }
+
+  function goTo(idx, animate){
+    if(isTransitioning && animate !== false) return;
+    if(idx === current) return;
+    current = idx;
+    setTransform(current, animate !== false);
+    updateDots();
+    if(animate !== false){
+      isTransitioning = true;
+      clearTimeout(window._carouselUnlock);
+      window._carouselUnlock = setTimeout(function(){ isTransitioning = false; }, TRANS_DUR + 50);
+    }
+  }
+
+  function nextSlide(){
+    if(isTransitioning) return;
+    goTo(current + 1);
+  }
+  function prevSlide(){
+    if(isTransitioning) return;
+    goTo(current - 1);
+  }
+
+  // 动画结束后，若落在克隆幻灯片上，瞬移到对应真实幻灯片
+  track.addEventListener('transitionend', function(){
+    if(current === slides.length - 1){
+      goTo(1, false);
+    } else if(current === 0){
+      goTo(totalReal, false);
+    }
+  });
+
+  // 生成指示点（仅对应真实幻灯片）
+  for(let i=0; i<totalReal; i++){
+    const dot = document.createElement('button');
+    dot.className = 'dot-btn' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', '第 ' + (i+1) + ' 张');
+    dot.type = 'button';
+    dot.onclick = function(e){ e.preventDefault(); if(isTransitioning) return; goTo(i + 1); resetAuto(); };
+    dotsContainer.appendChild(dot);
+  }
+
+  // 初始位置：真实第一张
+  setTransform(1, false);
+
+  function startAuto(){ stopAuto(); timer = setInterval(nextSlide, 5000); }
+  function stopAuto(){ if(timer){ clearInterval(timer); timer = null; } }
+  function resetAuto(){ stopAuto(); startAuto(); }
+
+  // 暴露复位接口，供 SPA 切回首页时调用
+  window._carousel = {
+    reset: function(){
+      stopAuto();
+      clearTimeout(window._carouselUnlock);
+      isTransitioning = false;
+      current = 1;
+      setTransform(1, false);
+      updateDots();
+      startAuto();
+    },
+    stop: stopAuto,
+    start: startAuto
+  };
+
+  // 页面隐藏时暂停，重新可见且当前在首页时恢复
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      stopAuto();
+    } else if(typeof currentPage !== 'undefined' && currentPage === 'home'){
+      startAuto();
+    }
+  });
+
+  prevBtn.type = 'button';
+  nextBtn.type = 'button';
+  prevBtn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); prevSlide(); resetAuto(); };
+  nextBtn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); nextSlide(); resetAuto(); };
+
+  var carousel = document.getElementById('bannerCarousel');
+  carousel.addEventListener('mouseenter', stopAuto);
+  carousel.addEventListener('mouseleave', startAuto);
+
+  var touchStartX = 0;
+  carousel.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, {passive:true});
+  carousel.addEventListener('touchend', function(e){
+    var diff = touchStartX - e.changedTouches[0].clientX;
+    if(Math.abs(diff) > 50){ if(diff > 0) nextSlide(); else prevSlide(); }
+    resetAuto();
+  }, {passive:true});
+
+  carousel.setAttribute('tabindex','0');
+  carousel.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); prevSlide(); resetAuto(); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); nextSlide(); resetAuto(); }
+  });
+
+  startAuto();
+})();
+
+// ---- 官网分页（产品/案例） ----
+function goProdPage(btn, delta){
+  var perPage = 3;
+  var total = Math.max(1, Math.ceil(_siteProductsView.length / perPage));
+  var next;
+  if(delta === 0){
+    next = parseInt(btn.textContent.trim()) || _prodPage;
+  } else {
+    next = _prodPage + delta;
+  }
+  if(next < 1) next = 1;
+  if(next > total) next = total;
+  if(next === _prodPage) return;
+  _prodPage = next;
+  applyProdPageDisplay();
+  updateProdPager();
+}
+
+var _casePage = 1;
+function goCasePage(btn, delta){
+  var wrapper = document.getElementById('casePagination') || btn.parentElement;
+  var btns = wrapper.querySelectorAll('button');
+  var curBtn = wrapper.querySelector('.bg-ink');
+  var cur = curBtn ? parseInt(curBtn.textContent) || 1 : 1;
+  var perPage = 3; // 每页3张
+  var grid = document.getElementById('caseGrid');
+  var totalCards = grid ? grid.querySelectorAll('a').length : 6;
+  var total = Math.ceil(totalCards / perPage); // 6/3 = 2页
+  var next;
+  if(delta === 0){
+    next = parseInt(btn.textContent.trim()) || cur;
+  } else {
+    next = cur + delta;
+  }
+  if(next < 1) next = 1;
+  if(next > total) next = total;
+  if(next === cur) return;
+  _casePage = next;
+  if(grid){
+    var cards = grid.querySelectorAll('a');
+    cards.forEach(function(c, i){
+      c.style.display = (i >= (next-1)*perPage && i < next*perPage) ? '' : 'none';
+    });
+  }
+  btns.forEach(function(b){
+    b.classList.remove('bg-ink','text-cream','font-medium');
+    b.classList.add('border','border-black/10');
+    b.disabled = false;
+    var t = b.textContent.trim();
+    if(t === String(next)){
+      b.classList.add('bg-ink','text-cream','font-medium');
+      b.classList.remove('border','border-black/10');
+    }
+  });
+  if(next <= 1){ btns[0].disabled = true; }
+  if(next >= total){ btns[btns.length-1].disabled = true; }
+}
+
+/* ---- 新闻分页 ---- */
+var _newsPage = 1;
+function goNewsPage(btn, delta){
+  var wrapper = btn.parentElement;
+  var btns = wrapper.querySelectorAll('button');
+  var curBtn = wrapper.querySelector('.bg-ink');
+  var cur = curBtn ? parseInt(curBtn.textContent) || 1 : 1;
+  var total = 2;
+  var next = cur + delta;
+  if(typeof delta === 'number' && delta === 0){
+    next = parseInt(btn.textContent.trim()) || cur;
+  } else {
+    next = cur + delta;
+  }
+  if(next < 1) next = 1;
+  if(next > total) next = total;
+  if(next === cur) return;
+  _newsPage = next;
+  // 在当前激活的 panel 内翻页
+  var activePanel = document.querySelector('.tab-panel:not(.hidden)');
+  if(activePanel){
+    var articles = activePanel.querySelectorAll('article');
+    articles.forEach(function(a, i){
+      a.style.display = (i < 3) ? '' : 'none';
+    });
+    if(next === 2 && articles.length > 3){
+      // 第2页显示后3条（如果有的话），否则切换到行业资讯面板
+      articles.forEach(function(a, i){ a.style.display = (i >= 3) ? '' : 'none'; });
+    }
+  }
+  btns.forEach(function(b){
+    b.classList.remove('bg-ink','text-cream','font-medium');
+    b.classList.add('border','border-black/10');
+    b.disabled = false;
+    var t = b.textContent.trim();
+    if(t === String(next)){
+      b.classList.add('bg-ink','text-cream','font-medium');
+      b.classList.remove('border','border-black/10');
+    }
+  });
+  if(next <= 1){ btns[0].disabled = true; }
+  if(next >= total){ btns[btns.length-1].disabled = true; }
+}
+
+/* ---- 案例空间筛选 ---- */
+function filterCases(category, tagEl){
+  // 更新标签样式
+  document.querySelectorAll('.case-filter-tag').forEach(function(t){
+    t.classList.remove('active');
+    t.style.background = '';
+    t.style.color = '';
+    t.style.borderColor = '';
+  });
+  if(tagEl){
+    tagEl.classList.add('active');
+  }
+  // 筛选卡片
+  var grid = document.getElementById('caseGrid');
+  if(!grid) return;
+  var cards = grid.querySelectorAll('a[data-space]');
+  cards.forEach(function(card){
+    if(category === '全部' || card.getAttribute('data-space') === category){
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+/* ---- 新闻详情：跳转至详情页 ---- */
+function showNewsDetail(article){
+  var title = article.querySelector('h3') ? article.querySelector('h3').textContent : '新闻详情';
+  var dateEl = article.querySelector('p');
+  var date = dateEl ? dateEl.textContent : '';
+  var desc = article.querySelectorAll('p')[1] ? article.querySelectorAll('p')[1].textContent : '';
+  var isIndustry = article.closest('#panel-industry') ? true : false;
+
+  document.getElementById('ndDate').textContent = date;
+  document.getElementById('ndTitle').textContent = title;
+  document.getElementById('ndBreadcrumb').textContent = isIndustry ? '行业资讯' : '企业新闻';
+
+  var bodyHTML = '<p class="text-lg font-medium text-ink mb-4">' + desc + '</p>';
+  if(title.indexOf('原木系列') !== -1){
+    bodyHTML += '<p>STK 全新原木系列以可持续北美黑胡桃木为核心材质，历时 18 个月研发打磨。设计团队从自然界中汲取灵感，将树木年轮的纹理转化为家具表面的独特肌理。</p><p>该系列涵盖餐桌、餐椅、电视柜、床架等 12 款单品，每一件都经过多道精细工序。采用传统榫卯结构与现代数控技术相结合的混合工艺，确保结构稳固的同时保留手工温度。</p><p>全系产品即日起接受预订，预计交付周期为 45-60 天。</p>';
+  } else if(title.indexOf('体验店') !== -1){
+    bodyHTML += '<p>STK 全国第六家体验店坐落于成都市高新区银泰中心 in99，营业面积逾 1200 平方米。店内按「自然生活」理念划分了原木、软体、座椅、收纳四大主题空间。</p><p>开业期间推出限定款首发活动：前 100 名到店顾客可获赠 STK 定制香薰礼盒一份。</p><p>成都旗舰店的开业标志着 STK 西南战略布局的重要一步。</p>';
+  } else if(title.indexOf('奖项') !== -1){
+    bodyHTML += '<p>在 2026 中国国际家具展（CIFF）上，STK 原木餐桌系列凭借其极简而不简单的设计语言，从超过 200 件参赛作品中脱颖而出。</p><p>评委会特别指出：「STK 的作品展现了当代中国原创设计的成熟度——克制而自信，传统而前瞻。」</p>';
+  } else if(title.indexOf('趋势') !== -1 || title.indexOf('材质') !== -1){
+    bodyHTML += '<p>2026 年家居设计领域最显著的趋势之一是「材质觉醒」。消费者转而关注材料本身的触感、耐用性与环保属性。</p><p>数据显示，实木、石材、羊毛等天然材质的市场份额同比增长 23%。</p>';
+  } else if(title.indexOf('市场报告') !== -1 || title.indexOf('实木') !== -1){
+    bodyHTML += '<p>据中国家具行业协会发布的 2026 上半年市场报告显示，实木家具细分市场同比增长 18%。</p><p>年轻客群（25-35 岁）在实木家具消费中的占比首次突破 40%。</p>';
+  } else if(title.indexOf('智能') !== -1){
+    bodyHTML += '<p>当智能照明、无线充电、语音控制等功能逐渐成为家电标配时，传统家具行业面临着一场静默的融合革命。</p><p>STK 的态度是审慎而开放的。技术的终极目的是服务于人，而非喧宾夺主。</p>';
+  } else {
+    bodyHTML += '<p>' + desc + '</p><p>STK 本然家居始终坚持以原创设计为核心，将自然材质与现代工艺完美融合。</p>';
+  }
+  document.getElementById('ndBody').innerHTML = bodyHTML;
+  navigateTo('news-detail');
+}
+
+/* ---- 案例详情页 ---- */
+function openCaseDetail(idx){
+  var data = _cases[idx];
+  if(!data) return;
+  _selectedCase = data;
+  navigateTo('case-detail');
+}
+
+function renderCaseDetail(){
+  var data = _selectedCase;
+  if(!data) return;
+  var titleEl = document.getElementById('caseDetailTitle');
+  var metaEl = document.getElementById('caseDetailMeta');
+  var summaryEl = document.getElementById('caseDetailSummary');
+  var tagsEl = document.getElementById('caseDetailTags');
+  var highlightsEl = document.getElementById('caseDetailHighlights');
+  var materialsEl = document.getElementById('caseDetailMaterials');
+  var designerEl = document.getElementById('caseDetailDesigner');
+  if(titleEl) titleEl.textContent = data.title;
+  if(metaEl) metaEl.textContent = data.space + ' / ' + data.area + ' / ' + data.region + ' · ' + data.date + ' 完工';
+  if(summaryEl) summaryEl.textContent = data.summary;
+  if(tagsEl){
+    tagsEl.innerHTML = data.tags.map(function(t){ return '<span class="text-[11px] px-2.5 py-1 rounded-full bg-inklt/10 text-inklt font-medium">' + escapeHtml(t) + '</span>'; }).join('');
+  }
+  if(highlightsEl){
+    highlightsEl.innerHTML = data.highlights.map(function(h){ return '<li class="flex items-start gap-2"><span class="w-1.5 h-1.5 rounded-full bg-inklt mt-1.5 flex-shrink-0"></span><span>' + escapeHtml(h) + '</span></li>'; }).join('');
+  }
+  if(materialsEl) materialsEl.textContent = '主材：' + data.materials;
+  if(designerEl) designerEl.textContent = '设计师：' + data.designer;
+}
+
+/* ---- 职位详情页 ---- */
+var _selectedJob = null;
+
+function escapeHtml(str){
+  if(str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function showJobDetail(category, idx){
+  var list = getJobs().filter(function(j){ return j.status === '招聘中' && j.category === (category==='social'?'社会招聘':'校园招聘'); });
+  var job = list[idx];
+  if(!job) return;
+  _selectedJob = job;
+  navigateTo('job-detail');
+}
+
+function renderJobDetail(){
+  var data = _selectedJob;
+  if(!data) return;
+  var titleEl = document.getElementById('jobDetailTitle');
+  var metaEl = document.getElementById('jobDetailMeta');
+  var bodyEl = document.getElementById('jobDetailBody');
+  if(titleEl) titleEl.textContent = data.title;
+  if(metaEl){
+    var tagHTML = '';
+    if(data.category === '校园招聘') tagHTML += '<span class="text-[11px] px-2 py-0.5 rounded bg-inklt/10 text-inklt font-medium">校招</span>';
+    if(data.urgent) tagHTML += '<span class="ml-2 text-[11px] px-2 py-0.5 rounded bg-red-50 text-red-600 font-medium">急招</span>';
+    metaEl.innerHTML =
+      '<span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' + escapeHtml(data.city) + '</span>' +
+      '<span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.9 23.9 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>' + escapeHtml(data.type) + '</span>' +
+      '<span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' + escapeHtml(data.date) + ' 发布</span>' + tagHTML;
+  }
+  if(!bodyEl) return;
+  var dutyText = data.duty || '负责核心业务模块的推进与目标达成，参与产品/项目全周期管理；跨部门协作，确保项目按时高质量交付；持续优化工作流程，提升团队效率。';
+  var requireText = data.require || '1. 本科及以上学历，专业不限；2. 对家居行业有热情，具备良好的学习能力与团队协作意识；3. 有相关实习经验或项目经历者优先。';
+  var dutyList = dutyText.split(/[；\\n]/).filter(function(s){ return s.trim(); });
+  var requireList = requireText.split(/[；\\n]/).filter(function(s){ return s.trim(); });
+  bodyEl.innerHTML = '<div>' +
+    '<h3 class="text-base font-semibold text-ink mb-2">岗位职责</h3>' +
+    '<ul class="list-disc pl-5 space-y-1">' + dutyList.map(function(d){ return '<li>' + d + '</li>'; }).join('') + '</ul>' +
+    '</div>' +
+    '<div>' +
+    '<h3 class="text-base font-semibold text-ink mb-2">任职要求</h3>' +
+    '<ul class="list-disc pl-5 space-y-1">' + requireList.map(function(d){ return '<li>' + d + '</li>'; }).join('') + '</ul>' +
+    '</div>' +
+    '<div>' +
+    '<h3 class="text-base font-semibold text-ink mb-2">我们提供</h3>' +
+    '<ul class="list-disc pl-5 space-y-1"><li>具有竞争力的薪酬 + 年终奖金</li><li>五险一金 + 补充商业保险</li><li>带薪年假 + 节日福利 + 定期体检</li><li>广阔的职业发展空间和培训机会</li></ul>' +
+    '</div>';
+  var form = document.getElementById('jobApplyForm');
+  if(form) form.reset();
+  var success = document.getElementById('jobApplySuccess');
+  if(success) success.classList.add('hidden');
+  var btn = form ? form.querySelector('button[type="submit"]') : null;
+  if(btn){ btn.disabled = false; btn.textContent = '提交简历'; btn.style.opacity = '1'; }
+}
+
+function submitJobApply(e){
+  e.preventDefault();
+  var name = document.getElementById('applyName').value.trim();
+  var phone = document.getElementById('applyPhone').value.trim();
+  var file = document.getElementById('applyResume').files[0];
+  if(!name || !phone || !file){
+    alert('请填写必填项：姓名、联系电话并上传简历');
+    return false;
+  }
+  var success = document.getElementById('jobApplySuccess');
+  if(success) success.classList.remove('hidden');
+  var btn = e.target.querySelector('button[type="submit"]');
+  if(btn){ btn.disabled = true; btn.textContent = '已提交'; btn.style.opacity = '0.6'; }
+  return false;
+}
+
+/* ---- 亮点卡片展开详情 ---- */
+var _hlDetailData = {
+  design: [
+    'STK 拥有一支由 12 名资深设计师组成的原创团队，核心成员曾任职于国际一线家具品牌。',
+    '每件新品从概念到落地平均历时 6-18 个月，经历草图→3D建模→打样→测试→量产的完整流程。',
+    '设计理念根植于东方生活美学，同时融合北欧极简与日式侘寂，形成独特的「本然语言」。'
+  ],
+  ergonomics: [
+    '所有座椅类产品均经过不少于 500 人次的人体测量数据验证，覆盖 5th-95th 百分位人群。',
+    '桌面高度统一采用 750mm 标准工位高度（可定制 720/780mm），配合 420-450mm 的椅面深度。',
+    '沙发坐深控制在 550-600mm 区间，靠背倾角 100°-108°，兼顾正坐支撑与半躺放松。'
+  ],
+  smart: [
+    'STK 佛山智能制造基地于 2024 年投产，引入德国豪迈 CNC 加工中心与意大利 CEFLA 自动涂装线。',
+    '关键工序自动化率达 78%，每一件产品均可通过二维码追溯原材料来源、生产日期与质检记录。',
+    '数字化排产系统将交付周期从传统 90 天缩短至 45-60 天，且批次间品质一致性显著提升。'
+  ],
+  service: [
+    '提供 5 年框架质保、2 年表面质保，覆盖全国直营门店及 30+ 合作服务网点。',
+    '购买后 7 天内可无理由退换（未使用），30 天内如有质量问题免费上门检修或换新。',
+    '配备专属「家居顾问」一对一服务，从选购搭配到售后维护全程跟进，响应时间不超过 24 小时。'
+  ]
+};
+
+function showHighlightDetail(card){
+  var type = card.getAttribute('data-hl');
+  var detailEl = card.querySelector('.hl-detail');
+  if(!detailEl || !type) return;
+
+  // 如果已展开则收起
+  if(detailEl.classList.contains('expanded')){
+    detailEl.classList.remove('expanded');
+    detailEl.classList.add('hidden');
+    card.classList.remove('hl-active');
+    return;
+  }
+
+  // 收起其他已展开的卡片
+  document.querySelectorAll('.hl-detail.expanded').forEach(function(el){
+    el.classList.remove('expanded');
+    el.classList.add('hidden');
+    el.closest('.highlight-card').classList.remove('hl-active');
+  });
+
+  // 填充内容并展开
+  var lines = _hlDetailData[type] || ['暂无详细介绍。'];
+  detailEl.innerHTML = lines.map(function(l){ return '<p>' + l + '</p>'; }).join('');
+  detailEl.classList.remove('hidden');
+  // 触发 reflow 后添加 expanded 类以启用过渡动画
+  void detailEl.offsetWidth;
+  detailEl.classList.add('expanded');
+  card.classList.add('hl-active');
+}
+
+/* ---- 产品详情：跳转至产品详情页 ---- */
+function showProductDetail(id){
+  var list = getSiteProducts();
+  var p = null;
+  for(var i=0;i<list.length;i++){ if(list[i].id === id){ p = list[i]; break; } }
+  if(!p) return;
+  document.getElementById('pdTitle').textContent = p.name;
+  document.getElementById('pdSubtitle').textContent = p.subtitle || '';
+  document.getElementById('pdPrice').textContent = p.price ? '¥ ' + Number(p.price).toLocaleString() : '价格面议';
+  document.getElementById('pdSeriesTag').textContent = p.series;
+  document.getElementById('pdBreadcrumb').textContent = p.name;
+  var specsHTML = '';
+  for(var k in (p.specs||{})){
+    specsHTML += '<div class="flex justify-between py-2 border-b border-black/5"><span class="text-weak">' + k + '</span><span class="font-medium text-ink">' + p.specs[k] + '</span></div>';
+  }
+  document.getElementById('pdSpecs').innerHTML = specsHTML;
+  document.getElementById('pdDesc').innerHTML = p.detail || '';
+  navigateTo('product-detail');
+}
+
+/* ---- 产品搜索 + 系列筛选（数据驱动） ---- */
+function filterProducts(){ renderSiteProducts(); }
+
+/* ---- 在线预约表单提交 ---- */
+function submitAppointment(e){
+  e.preventDefault();
+  var name = document.getElementById('apptName').value.trim();
+  var phone = document.getElementById('apptPhone').value.trim();
+  var store = 'STK本然家居 · 上海旗舰店'; // 当前仅有一家门店
+  var date = document.getElementById('apptDate').value;
+  var product = document.getElementById('apptProduct').value.trim();
+  var note = document.getElementById('apptNote').value.trim();
+
+  if(!name || !phone){
+    alert('请填写必填项：姓名、联系电话');
+    return false;
+  }
+
+  // 生成预约编号
+  var now = new Date();
+  var dateStr = now.getFullYear().toString() +
+                String(now.getMonth()+1).padStart(2,'0') +
+                String(now.getDate()).padStart(2,'0');
+  var apptList = JSON.parse(localStorage.getItem('stk_appointments') || '[]');
+  var apptNo = 'AP' + dateStr + '-' + String(apptList.length + 1).padStart(3,'0');
+
+  var apptData = {
+    no: apptNo,
+    name: name,
+    phone: phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'), // 脱敏
+    phoneRaw: phone,
+    store: store,
+    date: date || '待定',
+    product: product,
+    note: note,
+    status: '待处理',
+    createdAt: now.toLocaleString()
+  };
+
+  apptList.push(apptData);
+  localStorage.setItem('stk_appointments', JSON.stringify(apptList));
+
+  // 显示成功消息
+  var msgEl = document.getElementById('apptSuccessMsg');
+  if(msgEl){ msgEl.style.display = ''; }
+  // 禁用提交按钮
+  var btn = document.getElementById('apptSubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '已提交'; btn.style.opacity = '0.6'; }
+
+  // 3秒后可重新提交
+  setTimeout(function(){
+    if(msgEl) msgEl.style.display = 'none';
+    document.getElementById('apptForm').reset();
+    if(btn){ btn.disabled = false; btn.textContent = '提交预约'; btn.style.opacity = '1'; }
+  }, 3500);
+
+  return false;
+}
+renderSiteProducts();
+</script>
+
+</body>
+</html>

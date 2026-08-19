@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STK本然家居 · 后台管理系统原型</title>
+<style>
+  :root{
+    --ink:#0F3D2E; --inklt:#6FA088; --cream:#FAF8F5; --mist:#F4F7F5; --weak:#9E9E9E;
+    --bg:#f0f2f5; --card:#fff; --border:#f0f0f0; --border2:#e8e8e8;
+    --t1:rgba(0,0,0,.88); --t2:rgba(0,0,0,.65); --t3:rgba(0,0,0,.45);
+    --sider:#0F3D2E; --sider-hover:rgba(255,255,255,.08); --sider-active:#6FA088;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; background:var(--bg); color:var(--t1); font-size:14px; -webkit-font-smoothing:antialiased;}
+
+  /* ===== 登录页 BR-01 ===== */
+  .login-wrap{position:fixed; inset:0; background:linear-gradient(135deg,#0F3D2E 0%,#1d5240 50%,#6FA088 100%); display:flex; align-items:center; justify-content:center; z-index:100;}
+  .login-card{background:#fff; border-radius:12px; width:380px; padding:40px 36px; box-shadow:0 12px 48px rgba(0,0,0,.2);}
+  .login-logo{display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:6px;}
+  .login-logo .badge{width:40px; height:40px; border-radius:8px; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; letter-spacing:.1em;}
+  .login-title{text-align:center; font-size:20px; font-weight:600; color:var(--ink); margin-top:4px;}
+  .login-sub{text-align:center; color:var(--t3); font-size:13px; margin-bottom:28px;}
+
+  /* ===== 布局 ===== */
+  .layout{display:flex; min-height:100vh;}
+  .sider{width:220px; background:var(--sider); position:fixed; top:0; bottom:0; left:0; display:flex; flex-direction:column; transition:width .2s; z-index:30;}
+  .sider-logo{height:64px; display:flex; align-items:center; gap:10px; padding:0 20px; color:#fff; border-bottom:1px solid rgba(255,255,255,.08);}
+  .sider-logo .badge{width:34px; height:34px; border-radius:7px; background:rgba(255,255,255,.12); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; letter-spacing:.08em; font-size:13px;}
+  .sider-logo .name{font-weight:600; font-size:15px; letter-spacing:.05em;}
+  .sider-logo .name small{display:block; font-size:11px; font-weight:400; color:rgba(255,255,255,.55); letter-spacing:0;}
+  .menu{flex:1; overflow-y:auto; padding:8px 0;}
+  .menu::-webkit-scrollbar{width:6px;}
+  .menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15); border-radius:3px;}
+  .menu-group{color:rgba(255,255,255,.4); font-size:12px; padding:12px 24px 4px; letter-spacing:.05em;}
+  .menu-item{display:flex; align-items:center; gap:10px; padding:10px 24px; color:rgba(255,255,255,.72); cursor:pointer; font-size:14px; transition:background .15s; position:relative; user-select:none;}
+  .menu-item:hover{background:var(--sider-hover); color:#fff;}
+  .menu-item.active{background:var(--sider-active); color:#fff;}
+  .menu-item.active::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:#fff;}
+  .menu-item svg{width:16px; height:16px; flex-shrink:0; opacity:.85;}
+  .menu-sub .menu-item{font-size:13px; padding:9px 24px 9px 50px; color:rgba(255,255,255,.72);}
+  .menu-sub .menu-item:hover{color:#fff;}
+  .menu-parent > .menu-sub{display:none; overflow:hidden;}
+  .menu-parent.open > .menu-sub{display:block;}
+  .menu-parent > .menu-item{justify-content:space-between; padding-right:18px;}
+  .menu-label{display:flex; align-items:center; gap:10px;}
+  .menu-arrow{font-size:10px; opacity:.7; transition:transform .2s; margin-left:8px; flex-shrink:0;}
+  .menu-parent.open > .menu-item .menu-arrow{transform:rotate(180deg);}
+  .menu-parent > .menu-item.active .menu-arrow{opacity:1; color:#fff;}
+
+  .main{margin-left:220px; flex:1; display:flex; flex-direction:column; min-width:0;}
+  .header{height:64px; background:#fff; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; position:sticky; top:0; z-index:20;}
+  .breadcrumb{color:var(--t3); font-size:13px; display:flex; align-items:center; gap:6px;}
+  .breadcrumb b{color:var(--t1); font-weight:500;}
+  .header-right{display:flex; align-items:center; gap:16px;}
+  .role-switch{display:flex; align-items:center; gap:8px; background:var(--mist); border-radius:8px; padding:4px; cursor:pointer;}
+  .role-switch span{padding:4px 12px; border-radius:6px; font-size:13px; color:var(--t2);}
+  .role-switch span.on{background:#fff; color:var(--ink); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .avatar{width:34px; height:34px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600;}
+  .content{padding:24px; flex:1;}
+
+  /* ===== 页面通用 ===== */
+  .page{display:none;}
+  .page.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .page-head{margin-bottom:20px;}
+  .page-head h2{font-size:20px; font-weight:600;}
+  .page-head p{color:var(--t3); font-size:13px; margin-top:4px;}
+  .card{background:#fff; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.04);}
+
+  /* ===== 统计卡片 BR-07 ===== */
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px;}
+  .stat-card{background:#fff; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.04); display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;}
+  .stat-card:hover{transform:translateY(-3px); box-shadow:0 6px 16px rgba(0,0,0,.1);}
+  .stat-card .label{color:var(--t3); font-size:13px;}
+  .stat-card .num{font-size:30px; font-weight:700; color:var(--ink); line-height:1;}
+  .stat-card .ico{width:40px; height:40px; border-radius:10px; background:var(--mist); display:flex; align-items:center; justify-content:center; color:var(--inklt);}
+  .todo-row{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:20px;}
+  .todo-card{background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,.04); display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all .2s; border:1px solid transparent;}
+  .todo-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08); border-color:var(--inklt); transform:translateY(-1px);}
+  .todo-card:active{transform:translateY(0); box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .todo-card .left{display:flex; align-items:center; gap:14px;}
+  .badge-red{background:#fff1f0; color:#cf1322; border:1px solid #ffa39e; border-radius:10px; padding:1px 8px; font-size:12px; font-weight:600;}
+
+  /* ===== 工具栏 ===== */
+  .toolbar{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px;}
+  .toolbar .spacer{flex:1;}
+  .field{display:flex; flex-direction:column; gap:4px;}
+  .field label{font-size:12px; color:var(--t3);}
+  input.in,select.in{height:34px; border:1px solid var(--border2); border-radius:7px; padding:0 12px; font-size:14px; color:var(--t1); background:#fff; outline:none; transition:border .15s; min-width:160px;}
+  input.in:focus,select.in:focus{border-color:var(--inklt); box-shadow:0 0 0 2px rgba(111,160,136,.15);}
+
+  /* ===== 按钮 ===== */
+  .btn{height:34px; padding:0 16px; border-radius:7px; font-size:14px; cursor:pointer; border:1px solid var(--border2); background:#fff; color:var(--t1); display:inline-flex; align-items:center; gap:6px; transition:all .15s; white-space:nowrap;}
+  .btn:hover{border-color:var(--inklt); color:var(--inklt);}
+  .btn-primary{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .btn-primary:hover{background:#164a38; border-color:#164a38; color:#fff;}
+  .btn-sm{height:28px; padding:0 10px; font-size:13px;}
+  .btn-link{height:auto; padding:0; border:none; background:none; color:var(--inklt);}
+  .btn-link:hover{color:#164a38;}
+  .btn-danger{color:#cf1322; border-color:#ffa39e;}
+  .btn-danger:hover{border-color:#cf1322; color:#cf1322;}
+  .btn-link-danger{height:auto; padding:2px 8px; border:1px solid transparent; background:none; color:#cf1322; border-radius:4px; font-size:13px; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center;}
+  .btn-link-danger:hover{border-color:#ffa39e; background:#fff1f0;}
+
+  /* ===== 表格操作按钮（详情/处理/流转/编辑）===== */
+  .btn-act{height:26px; padding:0 10px; border:1px solid var(--border2); border-radius:5px; font-size:13px; cursor:pointer; background:#fff; color:var(--t2); display:inline-flex; align-items:center; gap:3px; transition:all .15s; white-space:nowrap;}
+  .btn-act:hover{border-color:var(--inklt); color:var(--inklt); background:rgba(111,160,136,.04);}
+  .btn-act:active{transform:scale(.96);}
+  .btn-act-del{height:26px; padding:0 10px; border:1px solid transparent; border-radius:5px; font-size:13px; cursor:pointer; background:none; color:#cf1322; display:inline-flex; align-items:center; gap:3px; transition:all .15s;}
+  .btn-act-del:hover{border-color:#ffa39e; background:#fff1f0;}
+  .btn-act-del:active{transform:scale(.96);}
+  .table-actions{display:flex; gap:6px; flex-wrap:nowrap; align-items:center; white-space:nowrap;}
+
+  /* ===== 表格 ===== */
+  .table{width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .table thead th{background:#fafafa; text-align:left; padding:14px 16px; font-size:13px; color:var(--t2); font-weight:600; border-bottom:1px solid var(--border); white-space:nowrap;}
+  .table tbody td{padding:14px 16px; font-size:14px; border-bottom:1px solid var(--border); color:var(--t1);}
+  .table tbody tr:hover{background:#fafcff;}
+  .table tbody tr:last-child td{border-bottom:none;}
+  .thumb{width:46px; height:46px; border-radius:6px; background:linear-gradient(135deg,#0F3D2E,#6FA088); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px;}
+  .thumb-soft{background:linear-gradient(135deg,#F4F7F5,#e7efe9); color:var(--ink);}
+
+  /* ===== Tag ===== */
+  .tag{display:inline-block; padding:1px 9px; border-radius:5px; font-size:12px; line-height:22px; border:1px solid transparent; white-space:nowrap;}
+  .tag-green{background:#e8f6ef; color:#0F3D2E; border-color:#9fd9bf;}
+  .tag-blue{background:#e6f4ff; color:#1677ff; border-color:#91caff;}
+  .tag-gray{background:#fafafa; color:var(--t3); border-color:var(--border2);}
+  .tag-red{background:#fff1f0; color:#cf1322; border-color:#ffa39e;}
+  .tag-orange{background:#fff7e6; color:#d46b08; border-color:#ffd591;}
+
+  /* ===== 分页 ===== */
+  .pager{display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-top:16px;}
+  .pager button{min-width:32px; height:32px; border:1px solid var(--border2); background:#fff; border-radius:6px; cursor:pointer; font-size:13px;}
+  .pager button.cur{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .pager button:hover:not(.cur){border-color:var(--inklt); color:var(--inklt);}
+
+  /* ===== Modal / Drawer ===== */
+  .mask{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:80; display:none; align-items:center; justify-content:center; padding:20px;}
+  .mask.show{display:flex;}
+  .modal{background:#fff; border-radius:12px; width:560px; max-width:100%; max-height:88vh; overflow:auto; box-shadow:0 12px 48px rgba(0,0,0,.2); animation:pop .2s ease;}
+  @keyframes pop{from{opacity:0; transform:scale(.96);} to{opacity:1; transform:scale(1);}}
+  .modal-head{padding:18px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; font-size:16px; font-weight:600;}
+  .modal-body{padding:24px; display:flex; flex-direction:column; gap:18px;}
+  .modal-foot{padding:14px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;}
+  .x{cursor:pointer; color:var(--t3); font-size:20px; line-height:1;}
+  .x:hover{color:var(--t1);}
+
+  .drawer-mask{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:80; display:none;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed; top:0; right:0; bottom:0; width:520px; max-width:100%; background:#fff; z-index:81; box-shadow:-4px 0 24px rgba(0,0,0,.15); transform:translateX(100%); transition:transform .25s ease; display:flex; flex-direction:column;}
+  .drawer.show{transform:translateX(0);}
+  .drawer-head{padding:18px 24px; border-bottom:1px solid var(--border); font-size:16px; font-weight:600; display:flex; justify-content:space-between; align-items:center;}
+  .drawer-body{padding:24px; flex:1; overflow:auto; display:flex; flex-direction:column; gap:18px;}
+  .drawer-foot{padding:14px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;}
+
+  /* ===== 表单 ===== */
+  .form-item{display:flex; flex-direction:column; gap:6px;}
+  .form-item.horizontal{flex-direction:row; align-items:flex-start;}
+  .form-item label{font-size:13px; color:var(--t2);}
+  .form-item label .req{color:#cf1322; margin-right:3px;}
+  textarea.in{height:auto; min-height:72px; padding:8px 12px; resize:vertical; border:1px solid var(--border2); border-radius:7px; font-size:14px; font-family:inherit; outline:none;}
+  textarea.in:focus{border-color:var(--inklt); box-shadow:0 0 0 2px rgba(111,160,136,.15);}
+  .upload{border:1px dashed var(--border2); border-radius:8px; padding:18px; text-align:center; color:var(--t3); cursor:pointer; transition:border .15s; background:#fafafa;}
+  .upload:hover{border-color:var(--inklt); color:var(--inklt);}
+  .kv-row{display:flex; gap:10px; align-items:center;}
+  .kv-row input.in{flex:1; min-width:0;}
+  .rich{height:140px; border:1px solid var(--border2); border-radius:7px; padding:10px; background:#fff; color:var(--t3); font-size:13px; display:flex; align-items:center;}
+
+  /* ===== Toast ===== */
+  .toast-wrap{position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:10px; align-items:center;}
+  .toast{background:#fff; border-radius:8px; padding:10px 18px; box-shadow:0 6px 24px rgba(0,0,0,.15); display:flex; align-items:center; gap:8px; font-size:14px; animation:slideIn .25s ease;}
+  .toast .dot{width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;}
+  .toast.success .dot{background:#52c41a;}
+  .toast.error .dot{background:#cf1322;}
+  @keyframes slideIn{from{opacity:0; transform:translateY(-12px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ===== 空状态 ===== */
+  .empty{text-align:center; padding:48px 0; color:var(--t3);}
+  .empty svg{width:48px; height:48px; opacity:.4; margin-bottom:12px;}
+
+  /* ===== 详情 ===== */
+  .detail-grid{display:grid; grid-template-columns:120px 1fr; gap:14px 16px; font-size:14px;}
+  .detail-grid .k{color:var(--t3);}
+  .seg{display:inline-flex; border:1px solid var(--border2); border-radius:7px; overflow:hidden;}
+  .seg span{padding:6px 14px; font-size:13px; cursor:pointer; color:var(--t2);}
+  .seg span.on{background:var(--ink); color:#fff;}
+
+  .hidden{display:none !important;}
+  .role-only-admin{}
+</style>
+</head>
+<body>
+
+<!-- ============================ 登录页 (BR-01) ============================ -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="badge">STK</span>
+    </div>
+    <div class="login-title">本然家居 · 后台管理系统</div>
+    <div class="login-sub">STK BENRAN Furniture Admin Console</div>
+    <form id="loginForm" onsubmit="return doLogin(event)">
+      <div class="form-item" style="margin-bottom:16px;">
+        <label>登录账号 <span class="req">*</span></label>
+        <input class="in" id="loginUser" placeholder="请输入用户名" value="admin" style="width:100%;" />
+      </div>
+      <div class="form-item" style="margin-bottom:22px;">
+        <label>登录密码 <span class="req">*</span></label>
+        <input class="in" id="loginPwd" type="password" placeholder="请输入密码" value="admin123" style="width:100%;" />
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%; height:40px; justify-content:center;">登 录</button>
+    </form>
+    <p style="text-align:center; color:var(--t3); font-size:12px; margin-top:18px;">默认账号 admin / admin123（首次登录强制修改密码 BR-06）</p>
+  </div>
+</div>
+
+<!-- ============================ 主框架 ============================ -->
+<div class="layout hidden" id="appLayout">
+  <!-- 侧边栏 -->
+    <aside class="sider">
+    <div class="sider-logo">
+      <span class="badge">STK</span>
+      <span class="name">本然家居<small>后台管理系统</small></span>
+    </div>
+    <nav class="menu" id="sideMenu">
+      <div class="menu-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        工作台
+      </div>
+
+      <div class="menu-group">内容运营</div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="product-category">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg> 产品管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="product-category">产品系列</div>
+          <div class="menu-item" data-page="product-list">产品列表</div>
+        </div>
+      </div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="case-list">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg> 案例管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub"><div class="menu-item" data-page="case-list">案例列表</div></div>
+      </div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="news-category">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg> 新闻管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="news-category">新闻栏目</div>
+          <div class="menu-item" data-page="news-list">新闻列表</div>
+        </div>
+      </div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="job-list">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> 招聘管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub"><div class="menu-item" data-page="job-list">职位列表</div></div>
+      </div>
+
+      <div class="menu-group">单页内容</div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="content-about">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6L12 2z"/></svg> 内容管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="content-about">关于STK</div>
+          <div class="menu-item" data-page="content-milestone">发展历程</div>
+          <div class="menu-item" data-page="content-brand">品牌介绍</div>
+          <div class="menu-item" data-page="content-policy">售后服务政策</div>
+          <div class="menu-item" data-page="content-faq">常见问题 FAQ</div>
+        </div>
+      </div>
+      <div class="menu-item" data-page="store-list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12M9 21v-6h6v6"/></svg>
+        门店管理
+      </div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="banner-list">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v14"/></svg> 首页配置</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="banner-list">轮播图管理</div>
+          <div class="menu-item" data-page="homepage-recommend">首页推荐位</div>
+        </div>
+      </div>
+      <div class="menu-parent">
+        <div class="menu-item" data-page="appointment-list">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> 留资管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="appointment-list">在线预约</div>
+          <div class="menu-item" data-page="message-list">在线留言</div>
+        </div>
+      </div>
+
+      <div class="menu-group role-only-admin">系统设置</div>
+      <div class="menu-parent role-only-admin">
+        <div class="menu-item" data-page="user-list">
+          <span class="menu-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0112 0M16 11l2 2 4-4"/></svg> 系统管理</span>
+          <span class="menu-arrow">▼</span>
+        </div>
+        <div class="menu-sub">
+          <div class="menu-item" data-page="user-list">用户管理</div>
+          <div class="menu-item" data-page="role-list">角色权限</div>
+          <div class="menu-item" data-page="log-list">操作日志</div>
+          <div class="menu-item" data-page="change-pwd">修改密码</div>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <header class="header">
+      <div class="breadcrumb"><span id="crumbRoot">后台管理</span> / <b id="crumbPage">工作台</b></div>
+      <div class="header-right">
+        <div class="role-switch" title="演示：切换角色查看权限差异（BR-03）">
+          <span id="roleAdmin" class="on" onclick="switchRole('admin')">超级管理员</span>
+          <span id="roleEditor" onclick="switchRole('editor')">内容编辑</span>
+        </div>
+        <div class="avatar" title="当前用户">A</div>
+        <span style="font-size:13px; color:var(--t2);">admin</span>
+        <span class="btn btn-link" style="font-size:13px;" onclick="logout()">退出</span>
+      </div>
+    </header>
+
+    <main class="content" id="contentRoot">
+
+      <!-- ============ 工作台 (BR-07 / BR-08) ============ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-head"><h2>工作台</h2><p>运营数据概览与待办提醒</p></div>
+        <div class="stat-row">
+          <div class="stat-card" onclick="navTo('product-list')"><div class="ico">📦</div><span class="label">产品总数</span><span class="num" id="statProducts">0</span></div>
+          <div class="stat-card" onclick="navTo('case-list')"><div class="ico">🖼️</div><span class="label">案例总数</span><span class="num" id="statCases">0</span></div>
+          <div class="stat-card" onclick="navTo('news-list')"><div class="ico">📰</div><span class="label">新闻总数</span><span class="num" id="statNews">0</span></div>
+          <div class="stat-card" onclick="navTo('job-list')"><div class="ico">💼</div><span class="label">招聘职位数</span><span class="num" id="statJobs">0</span></div>
+        </div>
+        <div class="todo-row">
+          <div class="todo-card" onclick="navTo('appointment-list')">
+            <div class="left"><div class="ico" style="width:40px;height:40px;border-radius:10px;background:#fff1f0;display:flex;align-items:center;justify-content:center;">📝</div>
+              <div><div style="font-weight:600;">待处理预约</div><div style="color:var(--t3);font-size:13px;">需跟进的到店预约线索</div></div></div>
+            <span class="badge-red">12</span>
+          </div>
+          <div class="todo-card" onclick="navTo('message-list')">
+            <div class="left"><div class="ico" style="width:40px;height:40px;border-radius:10px;background:#fff7e6;display:flex;align-items:center;justify-content:center;">💬</div>
+              <div><div style="font-weight:600;">待处理留言</div><div style="color:var(--t3);font-size:13px;">需回访的在线咨询</div></div></div>
+            <span class="badge-red">7</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px; margin-bottom:14px; font-weight:600;">最近操作</h3>
+          <table class="table"><thead><tr><th>操作人</th><th>模块</th><th>动作</th><th>详情</th><th>时间</th></tr></thead>
+            <tbody>
+              <tr><td>admin</td><td>产品</td><td><span class="tag tag-green">上架</span></td><td>上架产品：云朵布艺沙发</td><td>2026-08-17 18:20</td></tr>
+              <tr><td>editor01</td><td>新闻</td><td><span class="tag tag-blue">新增</span></td><td>发布文章：STK 全新原木系列正式发布</td><td>2026-08-17 17:05</td></tr>
+              <tr><td>admin</td><td>预约</td><td><span class="tag tag-orange">状态</span></td><td>预约 #AP20260817-003 标记为已联系</td><td>2026-08-17 16:40</td></tr>
+            </tbody></table>
+        </div>
+      </section>
+
+      <!-- ============ 产品系列 (BR-09~BR-12) ============ -->
+      <section class="page" id="page-product-category">
+        <div class="page-head"><h2>产品系列</h2><p>维护产品所属系列（BR-09 列表 / BR-10 新增编辑 / BR-11 关联保护 / BR-12 排序）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>状态</label><select class="in" id="catStatusFilter" style="min-width:130px;" onchange="filterTable('page-product-category',this.value,4)"><option value="">全部状态</option><option value="启用">启用</option><option value="停用">停用</option></select></div>
+          <div class="field"><label>关键词</label><input class="in" id="catSearch" placeholder="系列名称" oninput="searchTable('page-product-category',this.value,[1])" /></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openModal('catModal','新增产品系列')">+ 新增系列</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>封面</th><th>系列名称</th><th>排序</th><th>产品数</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="启用"><td><div class="thumb thumb-soft">图</div></td><td>原木系列</td><td>1</td><td>34</td><td><span class="tag tag-green">启用</span></td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('catModal','编辑产品系列')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品系列','原木系列',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-status="启用"><td><div class="thumb thumb-soft">图</div></td><td>软体系列</td><td>2</td><td>28</td><td><span class="tag tag-green">启用</span></td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('catModal','编辑产品系列')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品系列','软体系列',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-status="启用"><td><div class="thumb thumb-soft">图</div></td><td>座椅系列</td><td>3</td><td>22</td><td><span class="tag tag-green">启用</span></td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('catModal','编辑产品系列')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品系列','座椅系列',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-status="停用"><td><div class="thumb thumb-soft">图</div></td><td>收纳系列</td><td>4</td><td>19</td><td><span class="tag tag-gray">停用</span></td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('catModal','编辑产品系列')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品系列','收纳系列',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pager"><button class="cur" onclick="goPage(this,0)">1</button><button onclick="goPage(this,0)">2</button><button onclick="goPage(this,1)">›</button></div>
+      </section>
+
+      <!-- ============ 产品列表 (BR-13~BR-20) ============ -->
+      <section class="page" id="page-product-list">
+        <div class="page-head"><h2>产品列表</h2><p>产品 CRUD + 上下架 + 图集 + 规格参数 + 首页推荐（BR-13~BR-20）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>系列</label><select class="in" id="prodSeriesFilter" style="min-width:130px;" onchange="filterTableMulti('page-product-list',this.value,'data-series','prodStatusFilter')"><option value="">全部系列</option><option value="原木系列">原木系列</option><option value="软体系列">软体系列</option><option value="座椅系列">座椅系列</option><option value="收纳系列">收纳系列</option></select></div>
+          <div class="field"><label>状态</label><select class="in" id="prodStatusFilter" style="min-width:130px;" onchange="filterTableMulti('page-product-list',this.value,'data-status','prodSeriesFilter')"><option value="">全部状态</option><option value="上架">上架</option><option value="下架">下架</option></select></div>
+          <div class="field"><label>关键词</label><input class="in" id="prodSearch" placeholder="产品名称" oninput="searchTable('page-product-list',this.value,[2])" /></div>
+          <div class="spacer"></div>
+          <button class="btn">批量上架</button>
+          <button class="btn">批量下架</button>
+          <button class="btn btn-primary" onclick="openAddProduct()">+ 新增产品</button>
+        </div>
+        <table class="table">
+          <thead><tr><th style="width:40px;"><input type="checkbox"/></th><th>主图</th><th>产品名称</th><th>系列</th><th>价格</th><th>推荐</th><th>状态</th><th>排序</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-series="原木系列" data-status="上架" data-desc="精选北美黑胡桃木，木纹清晰自然，采用传统榫卯工艺，结构稳固耐用。桌面经过环保水性漆处理，触感温润，适合 4–6 人家庭用餐。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>胡桃木餐桌</td><td>原木系列</td><td>¥ 4,280</td><td><span class="tag tag-orange">推荐</span></td><td><span class="tag tag-green">上架</span></td><td>1</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','胡桃木餐桌',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="软体系列" data-status="上架" data-desc="高克重棉麻面料，填充高弹海绵与鹅绒混合层，坐感柔软却有支撑。模块化设计，可根据客厅尺度自由组合。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>云朵布艺沙发</td><td>软体系列</td><td>¥ 8,990</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>2</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','云朵布艺沙发',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="座椅系列" data-status="上架" data-desc="白橡木框架，椅面手工编织纸绳，透气性好。弧形靠背贴合人体曲线，既是单椅也是阅读角的点睛之笔。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>简逸休闲椅</td><td>座椅系列</td><td>价格面议</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>3</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','简逸休闲椅',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="原木系列" data-status="上架" data-desc="大容量收纳空间，内置可调节层板，满足餐具、小家电分类存放。柜门采用静音铰链，开合顺滑。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>原木餐边柜</td><td>原木系列</td><td>¥ 3,560</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>4</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','原木餐边柜',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="软体系列" data-status="上架" data-desc="软包床头填充高密度海绵，外层为可拆洗科技布。床架使用榉木排骨架，承重稳固，翻身无异响。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>北欧风双人床</td><td>软体系列</td><td>¥ 12,800</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>5</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','北欧风双人床',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="收纳系列" data-status="上架" data-desc="开放式与封闭式收纳结合，模块化拼搭，可落地也可上墙。柜体选用 E0 级板材，环保无异味。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>极简书架组合</td><td>收纳系列</td><td>¥ 2,180</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>6</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','极简书架组合',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="座椅系列" data-status="上架" data-desc="四把成套，椅背微弧设计，坐面加宽。白蜡木椅腿，底部防滑垫保护地板。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>实木餐椅套装</td><td>座椅系列</td><td>¥ 3,280</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>7</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','实木餐椅套装',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-series="原木系列" data-status="上架" data-desc="悬浮式设计，隐藏走线孔，背板预留散热空间。抽屉采用阻尼滑轨，推拉静音。"><td><input type="checkbox"/></td><td><div class="thumb">图</div></td><td>白橡木电视柜</td><td>原木系列</td><td>¥ 4,680</td><td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>8</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('prodDrawer','编辑产品')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete('产品','白橡木电视柜',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pager"><button onclick="goPage(this,-1)">‹</button><button class="cur" onclick="goPage(this,0)">1</button><button onclick="goPage(this,0)">2</button><button onclick="goPage(this,0)">3</button><button onclick="goPage(this,1)">›</button></div>
+      </section>
+
+      <!-- ============ 案例列表 (BR-21~BR-25) ============ -->
+      <section class="page" id="page-case-list">
+        <div class="page-head"><h2>案例列表</h2><p>实景案例维护（BR-21 列表 / BR-22 新增编辑 / BR-23 发布控制 / BR-24 删除 / BR-25 筛选）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>空间类型</label><select class="in" id="caseSpaceFilter" style="min-width:130px;" onchange="filterTableMulti('page-case-list',this.value,'data-space','caseStatusFilter')"><option value="">全部</option><option value="客厅">客厅</option><option value="卧室">卧室</option><option value="餐厅">餐厅</option><option value="书房">书房</option><option value="办公">办公</option></select></div>
+          <div class="field"><label>状态</label><select class="in" id="caseStatusFilter" style="min-width:130px;" onchange="filterTableMulti('page-case-list',this.value,'data-status','caseSpaceFilter')"><option value="">全部</option><option value="发布">发布</option><option value="下线">下线</option></select></div>
+          <div class="field"><label>关键词</label><input class="in" id="caseSearch" placeholder="案例标题" oninput="searchTable('page-case-list',this.value,[1])" /></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('caseDrawer','新增案例')">+ 新增案例</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>封面</th><th>标题</th><th>空间类型</th><th>城市</th><th>状态</th><th>排序</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-space="客厅" data-status="发布" data-intro="为一对年轻夫妇打造的 89㎡ 两居室。以白色与原木为底，留白墙面搭配少量绿植，营造通透、克制的城市栖居氛围。客厅采用云朵沙发与极简书架组合，形成阅读与待客双功能区。"><td><div class="thumb">图</div></td><td>城市青年的留白之家</td><td><span class="tag tag-gray">客厅</span></td><td>华东</td><td><span class="tag tag-green">发布</span></td><td>1</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('caseDrawer','编辑案例')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('案例','城市青年的留白之家',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-space="餐厅" data-status="发布" data-intro="120㎡ 三居室，业主希望餐厅成为家庭核心。我们选用胡桃木餐桌与实木餐椅套装，搭配可调光吊灯，让三餐更有仪式感。餐边柜隐藏了小家电与杂物，保持视觉整洁。"><td><div class="thumb">图</div></td><td>原木质感的三口之家</td><td><span class="tag tag-gray">餐厅</span></td><td>华南</td><td><span class="tag tag-green">发布</span></td><td>2</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('caseDrawer','编辑案例')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('案例','原木质感的三口之家',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-space="书房" data-status="下线" data-intro="将 8㎡ 次卧改造为独立书房。沿窗设置悬浮书桌，搭配简逸休闲椅与整墙开放式书架，自然光充足，适合长时间阅读与居家办公。"><td><div class="thumb">图</div></td><td>沉静书房 · 阅读角落</td><td><span class="tag tag-gray">书房</span></td><td>西南</td><td><span class="tag tag-gray">下线</span></td><td>3</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('caseDrawer','编辑案例')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('案例','沉静书房·阅读角落',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pager"><button class="cur" onclick="goPage(this,0)">1</button><button onclick="goPage(this,0)">2</button><button onclick="goPage(this,1)">›</button></div>
+      </section>
+
+      <!-- ============ 新闻栏目 (BR-26~BR-28) ============ -->
+      <section class="page" id="page-news-category">
+        <div class="page-head"><h2>新闻栏目</h2><p>栏目维护（BR-26 内置企业新闻/行业资讯 / BR-27 排序状态 / BR-28 关联保护）</p></div>
+        <div class="toolbar"><div class="spacer"></div><button class="btn btn-primary" onclick="openModal('newsCatModal','新增新闻栏目')">+ 新增栏目</button></div>
+        <table class="table">
+          <thead><tr><th>栏目名称</th><th>排序</th><th>状态</th><th>文章数</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="启用"><td>企业新闻</td><td>1</td><td><span class="tag tag-green">启用</span></td><td>26</td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('newsCatModal','编辑新闻栏目')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('新闻栏目','企业新闻',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-status="启用"><td>行业资讯</td><td>2</td><td><span class="tag tag-green">启用</span></td><td>16</td><td><div style="display:flex;gap:8px;"><button type="button" class="btn-act" onclick="openModal('newsCatModal','编辑新闻栏目')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('新闻栏目','行业资讯',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 新闻列表 (BR-29~BR-33) ============ -->
+      <section class="page" id="page-news-list">
+        <div class="page-head"><h2>新闻列表</h2><p>文章 CRUD + 富文本 + 草稿/发布（BR-29~BR-33）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>栏目</label><select class="in" id="newsCatFilter" style="min-width:130px;" onchange="filterTableMulti('page-news-list',this.value,'data-category','newsStatusFilter')"><option value="">全部</option><option value="企业新闻">企业新闻</option><option value="行业资讯">行业资讯</option></select></div>
+          <div class="field"><label>状态</label><select class="in" id="newsStatusFilter" style="min-width:130px;" onchange="filterTableMulti('page-news-list',this.value,'data-status','newsCatFilter')"><option value="">全部</option><option value="已发布">已发布</option><option value="草稿">草稿</option></select></div>
+          <div class="field"><label>关键词</label><input class="in" id="newsSearch" placeholder="文章标题" oninput="searchTable('page-news-list',this.value,[1])" /></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('newsDrawer','新增文章')">+ 写文章</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>封面</th><th>标题</th><th>栏目</th><th>发布日期</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-category="企业新闻" data-status="已发布" data-body="8 月 10 日，STK 本然家居正式发布 2026 全新原木系列。本次系列以「自然之息」为主题，选用可持续林场认证木材，在保留原木温润质感的同时，引入更符合现代居住的轻量化结构。新品涵盖客厅、餐厅、卧室三大场景，将于本月底陆续到店。"><td><div class="thumb thumb-soft">图</div></td><td>STK 全新原木系列正式发布</td><td>企业新闻</td><td>2026.08.10</td><td><span class="tag tag-green">已发布</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('newsDrawer','编辑文章')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('文章','STK全新原木系列',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="企业新闻" data-status="已发布" data-body="在近期举办的上海国际家居设计周上，STK 本然家居凭借「留白之家」案例荣获「年度原创家居设计」奖项。评委会认为，STK 在克制美学与功能主义之间找到了平衡，为中国原创家居品牌树立了新标杆。"><td><div class="thumb thumb-soft">图</div></td><td>STK 荣获「年度原创家居设计」奖项</td><td>企业新闻</td><td>2026.06.20</td><td><span class="tag tag-green">已发布</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('newsDrawer','编辑文章')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('文章','STK获奖文章',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="行业资讯" data-status="草稿" data-body="据《2026 中国实木家具消费趋势报告》显示，消费者越来越关注木材来源的可持续性、产品的可维修性以及品牌的设计原创能力。STK 本然家居在「可持续材料」「原创设计」两项指标中均位居前列。"><td><div class="thumb thumb-soft">图</div></td><td>2026 实木家具消费趋势报告</td><td>行业资讯</td><td>2026.07.02</td><td><span class="tag tag-gray">草稿</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('newsDrawer','编辑文章')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('文章','实木家具趋势报告',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pager"><button class="cur" onclick="goPage(this,0)">1</button><button onclick="goPage(this,0)">2</button><button onclick="goPage(this,1)">›</button></div>
+      </section>
+
+      <!-- ============ 职位列表 (BR-34~BR-38) ============ -->
+      <section class="page" id="page-job-list">
+        <div class="page-head"><h2>职位列表</h2><p>招聘职位维护（BR-34~BR-38）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>分类</label><select class="in" id="jobCatFilter" style="min-width:130px;" onchange="filterTableMulti('page-job-list',this.value,'data-category','jobStatusFilter')"><option value="">全部</option><option value="社会招聘">社会招聘</option><option value="校园招聘">校园招聘</option></select></div>
+          <div class="field"><label>状态</label><select class="in" id="jobStatusFilter" style="min-width:130px;" onchange="filterTableMulti('page-job-list',this.value,'data-status','jobCatFilter')"><option value="">全部</option><option value="招聘中">招聘中</option><option value="已关闭">已关闭</option></select></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('jobDrawer','新增职位')">+ 新增职位</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>职位名称</th><th>分类</th><th>工作地点</th><th>类型</th><th>急招</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-category="社会招聘" data-status="招聘中" data-date="2026.08.01" data-duty="1. 负责家具产品的外观与结构设计；2. 参与新品立项、材料选型与工艺评估；3. 输出产品图纸、工艺文件及打样跟进。" data-require="1. 工业设计、家具设计等相关专业本科及以上学历；2. 3 年以上家具设计经验，熟悉实木与软体工艺；3. 熟练使用 Rhino / SolidWorks / CAD 等设计软件。"><td>高级家具设计师</td><td>社会招聘</td><td>上海</td><td>全职</td><td><span class="tag tag-red">急招</span></td><td><span class="tag tag-green">招聘中</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('jobDrawer','编辑职位')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('职位','高级家具设计师',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="社会招聘" data-status="招聘中" data-date="2026.07.20" data-duty="1. 负责微信公众号、小红书、抖音等平台内容策划与发布；2. 监测数据并输出运营周报；3. 配合市场活动进行线上传播。" data-require="1. 1–3 年新媒体运营经验，有家居/生活方式类目经验优先；2. 具备文案、拍摄与基础剪辑能力；3. 对数据敏感，善于复盘优化。"><td>新媒体运营专员</td><td>社会招聘</td><td>上海</td><td>全职</td><td><span class="tag tag-gray">—</span></td><td><span class="tag tag-green">招聘中</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('jobDrawer','编辑职位')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('职位','新媒体运营',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="社会招聘" data-status="招聘中" data-date="2026.07.10" data-duty="1. 负责家具生产过程的质量管控、工艺标准制定与供应商质量管理；2. 建立并完善来料、制程、成品检验标准；3. 处理客诉问题，推动质量持续改进。" data-require="1. 机械、材料、工业工程等相关专业本科及以上学历；2. 3 年以上家居或制造业品质管理经验；3. 熟悉 ISO 质量管理体系与常用检测方法。"><td>品质管理工程师</td><td>社会招聘</td><td>上海</td><td>全职</td><td><span class="tag tag-gray">—</span></td><td><span class="tag tag-green">招聘中</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('jobDrawer','编辑职位')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('职位','品质管理工程师',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="校园招聘" data-status="招聘中" data-date="2026.09.01" data-duty="1. 参与产品设计全流程，包括用户调研、概念草图、建模渲染；2. 协助设计总监完成季度新品开发；3. 整理设计资料与样品管理。" data-require="1. 2026 届应届毕业生，工业设计、产品设计等相关专业；2. 热爱家居设计，有完整作品集；3. 学习能力强，具备良好的沟通协作能力。"><td>管培生（产品设计方向）</td><td>校园招聘</td><td>上海</td><td>校招</td><td><span class="tag tag-gray">—</span></td><td><span class="tag tag-green">招聘中</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('jobDrawer','编辑职位')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('职位','管培生（产品设计方向）',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-category="校园招聘" data-status="招聘中" data-date="2026.09.01" data-duty="1. 协助品牌市场部门完成营销策划与执行；2. 参与线上线下活动创意、物料制作与效果复盘；3. 跟踪家居行业趋势，输出竞品分析报告。" data-require="1. 2026 届应届毕业生，市场营销、广告学、传播学等相关专业优先；2. 对家居生活方式有热情，具备良好的沟通与执行力；3. 有学生会、社团或相关实习经验者优先。"><td>管培生（市场营销方向）</td><td>校园招聘</td><td>上海</td><td>校招</td><td><span class="tag tag-gray">—</span></td><td><span class="tag tag-green">招聘中</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('jobDrawer','编辑职位')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('职位','管培生（市场营销方向）',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 关于STK (BR-39 单页) ============ -->
+      <section class="page" id="page-content-about">
+        <div class="page-head"><h2>关于STK</h2><p>单页富文本维护，保存后前台即时生效（BR-39）</p></div>
+        <div class="card">
+          <div class="form-item" style="margin-bottom:18px;"><label>标题</label><input class="in" value="关于 STK 本然家居" style="max-width:420px;" /></div>
+          <div class="form-item" style="margin-bottom:18px;"><label>封面图（可选）</label><div class="upload" style="max-width:300px;">点击上传图片</div></div>
+          <div class="form-item"><label>正文（富文本）</label><textarea class="in content-editor" id="aboutEditor" data-content-key="about" rows="10" placeholder="请输入关于 STK 的正文内容">STK本然家居成立于 2015 年，是一家专注于原创设计的家居品牌。我们从「让生活回归本然」的理念出发，致力于用克制的设计语言和优质的天然材料，为每一个家庭创造有温度的居住空间。
+
+经过十余年的发展，STK 已形成覆盖客厅、餐厅、卧室、书房等全场景的产品矩阵。我们的设计团队坚持原创路线，每一件产品都经过反复的人体工程学验证与材料测试。
+
+目前，STK 在上海设有 1 家直营体验旗舰店，地址位于静安区南京西路 1268 号 恒隆广场。未来我们将持续打磨产品与服务，让更多家庭感受到「本然」的力量。</textarea></div>
+          <div style="margin-top:8px; color:var(--t3); font-size:12px;">最后修改人：admin · 2026-08-16 14:30</div>
+          <div style="margin-top:20px;"><button class="btn btn-primary" onclick="saveContent('about')">保存</button><span id="aboutSaveTip" style="margin-left:10px;color:var(--t3);font-size:12px;"></span></div>
+        </div>
+      </section>
+
+      <!-- ============ 发展历程 (BR-40) ============ -->
+      <section class="page" id="page-content-milestone">
+        <div class="page-head"><h2>发展历程</h2><p>时间轴条目维护，前台按时间轴展示（BR-40）</p></div>
+        <div class="toolbar"><div class="spacer"></div><button class="btn btn-primary" onclick="openModal('msModal','新增历程条目')">+ 新增条目</button></div>
+        <table class="table">
+          <thead><tr><th>年份</th><th>事件标题</th><th>描述</th><th>排序</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>2015</td><td>品牌创立</td><td>STK本然家居正式成立，确立原创设计方向</td><td>5</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openModal('msModal','编辑历程条目')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('历程条目','2015品牌创立',this.closest('tr'))">删除</button></div></td></tr>
+            <tr><td>2021</td><td>智造基地落成</td><td>自建智能制造基地，实现数字化产线</td><td>2</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openModal('msModal','编辑历程条目')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('历程条目','2021智造基地',this.closest('tr'))">删除</button></div></td></tr>
+            <tr><td>2026</td><td>品牌升级</td><td>视觉与体验全面升级，深化墨绿高级调性</td><td>1</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openModal('msModal','编辑历程条目')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('历程条目','2026品牌升级',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 品牌介绍 (BR-39) ============ -->
+      <section class="page" id="page-content-brand">
+        <div class="page-head"><h2>品牌介绍</h2><p>品牌理念/故事富文本维护（BR-39）</p></div>
+        <div class="card">
+          <div class="form-item" style="margin-bottom:18px;"><label>标题</label><input class="in" value="本然 · 生活的本来面目" style="max-width:420px;" /></div>
+          <div class="form-item"><label>正文（富文本）</label><textarea class="in content-editor" id="brandEditor" data-content-key="brand" rows="10" placeholder="请输入品牌介绍正文">「本然」，是生活的本来面目。
+
+我们相信，最好的家居不是最昂贵的，而是最适合你的。它不喧哗、不抢戏，却能在日常的每一次触碰中传递温度。
+
+STK 的每件作品都遵循三条原则：材质真实——选用可溯源的天然木材与环保面料；设计克制——去除一切不必要的装饰，让功能与美感自然统一；工艺考究——每一道工序都经得起时间的检验。</textarea></div>
+          <div style="margin-top:20px;"><button class="btn btn-primary" onclick="saveContent('brand')">保存</button><span id="brandSaveTip" style="margin-left:10px;color:var(--t3);font-size:12px;"></span></div>
+        </div>
+      </section>
+
+      <!-- ============ 售后服务政策 (BR-39) ============ -->
+      <section class="page" id="page-content-policy">
+        <div class="page-head"><h2>售后服务政策</h2><p>政策正文富文本维护（BR-39 / FR-51）</p></div>
+        <div class="card">
+          <div class="form-item" style="margin-bottom:18px;"><label>标题</label><input class="in" value="STK 售后服务政策" style="max-width:420px;" /></div>
+          <div class="form-item"><label>正文（富文本）</label><textarea class="in content-editor" id="policyEditor" data-content-key="policy" rows="12" placeholder="请输入售后服务政策正文">一、质保范围
+STK 出售的所有家具产品均享受自交付之日起 五年质保（框架结构）、两年质保（表面涂层、软包面料）。质保期内因材料或工艺缺陷导致的问题，我们将免费维修或更换。
+
+二、质保范围外
+正常使用产生的磨损（如木质表面细微划痕、布艺自然老化）
+因不当使用、意外撞击、自行拆改造成的损坏
+超出质保期限的维修需求（可提供有偿服务）
+
+三、售后服务流程
+通过本页「常见问题 FAQ」或拨打客服热线反馈问题
+客服将在 24 小时内响应并安排上门检测（视情况）
+确认问题后出具维修方案，一般 7–15 个工作日内完成
+维修完成后进行回访确认
+
+四、退换货说明
+产品交付后 7 天内，如存在质量问题可申请退换货；非质量问题的退换需保持产品完好且承担往返运费。定制类产品不支持无理由退货。
+
+本政策最终解释权归 STK 本然家居所有。如有疑问请联系客服：400-8888-0000。</textarea></div>
+          <div style="margin-top:20px;"><button class="btn btn-primary" onclick="saveContent('policy')">保存</button><span id="policySaveTip" style="margin-left:10px;color:var(--t3);font-size:12px;"></span></div>
+        </div>
+      </section>
+
+      <!-- ============ FAQ (BR-41) ============ -->
+      <section class="page" id="page-content-faq">
+        <div class="page-head"><h2>常见问题 FAQ</h2><p>问题/答案维护，仅启用项前台展示（BR-41 / FR-52）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>分类</label><select class="in" style="min-width:130px;"><option>全部分类</option><option>产品</option><option>售后</option><option>配送</option></select></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('faqDrawer','新增FAQ')">+ 新增问题</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>问题</th><th>分类</th><th>答案</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="faqTableBody">
+            <tr data-answer="框架结构享有五年质保，表面涂层和软包面料享有两年质保。具体以产品随附的质保卡为准。" data-status="启用"><td>产品的保修期是多久？</td><td>售后</td><td>框架结构享有五年质保，表面涂层和软包面料享有两年质保。具体以产品随附的质保卡为准。</td><td>1</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('faqDrawer','编辑FAQ')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('FAQ','产品保修期',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-answer="您可以通过「关于我们」→「在线预约」表单提交预约信息，或直接拨打客服热线 400-8888-0000。我们将在 1–2 个工作日内与您确认预约时间。" data-status="启用"><td>如何预约到店参观？</td><td>产品</td><td>您可以通过「关于我们」→「在线预约」表单提交预约信息，或直接拨打客服热线 400-8888-0000。我们将在 1–2 个工作日内与您确认预约时间。</td><td>2</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('faqDrawer','编辑FAQ')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('FAQ','预约到店',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-answer="部分产品支持有限范围的定制服务（如尺寸微调、面料颜色选择）。具体请咨询客服或在到店体验时与设计师沟通。" data-status="启用"><td>是否支持定制尺寸或颜色？</td><td>产品</td><td>部分产品支持有限范围的定制服务（如尺寸微调、面料颜色选择）。具体请咨询客服或在到店体验时与设计师沟通。</td><td>3</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('faqDrawer','编辑FAQ')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('FAQ','定制尺寸颜色',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-answer="各体验店所在城市免费配送安装；其他地区根据距离收取配送费（下单时自动计算）。大宗订单可享配送优惠，详询客服。" data-status="停用"><td>配送和安装怎么收费？</td><td>配送</td><td>各体验店所在城市免费配送安装；其他地区根据距离收取配送费（下单时自动计算）。大宗订单可享配送优惠，详询客服。</td><td>4</td><td><span class="tag tag-gray">停用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('faqDrawer','编辑FAQ')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('FAQ','配送安装收费',this.closest('tr'))">删除</button></div></td></tr>
+            <tr data-answer="您可以拨打客服热线并提供预留的手机号码，客服将为您查询最新的订单或预约处理进度。" data-status="启用"><td>如何查询我的订单或预约进度？</td><td>售后</td><td>您可以拨打客服热线并提供预留的手机号码，客服将为您查询最新的订单或预约处理进度。</td><td>5</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('faqDrawer','编辑FAQ')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('FAQ','查询订单预约进度',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;"><button class="btn btn-primary" onclick="saveFaqContent()">保存 FAQ（同步官网）</button><span id="faqSaveTip" style="margin-left:10px;color:var(--t3);font-size:12px;"></span></div>
+      </section>
+
+      <!-- ============ 门店管理 (BR-43~BR-46) ============ -->
+      <section class="page" id="page-store-list">
+        <div class="page-head"><h2>门店管理</h2><p>门店 CRUD + 状态控制（BR-43~BR-46）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>状态</label><select class="in" id="storeStatusFilter" style="min-width:120px;" onchange="filterTable('page-store-list',this.value,5)"><option value="">全部</option><option value="启用">启用</option><option value="停用">停用</option></select></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('storeDrawer','新增门店')">+ 新增门店</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>门店名称</th><th>城市</th><th>地址</th><th>电话</th><th>营业时间</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="启用"><td>上海旗舰店</td><td>上海</td><td>上海市静安区南京西路 1268 号 恒隆广场 1–2F</td><td>021-8888-6666</td><td>周一至周日 10:00-20:00</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('storeDrawer','编辑门店')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('门店','上海旗舰店',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 轮播图管理 (BR-47~BR-50) ============ -->
+      <section class="page" id="page-banner-list">
+        <div class="page-head"><h2>轮播图管理</h2><p>首页 Banner 配置（BR-47 列表 / BR-48 新增编辑 / BR-49 启用控制 / BR-50 删除）</p></div>
+        <div class="toolbar"><div class="spacer"></div><button class="btn btn-primary" onclick="openDrawer('bannerDrawer','新增轮播图')">+ 新增轮播</button></div>
+        <table class="table">
+          <thead><tr><th>预览</th><th>标题</th><th>副标题</th><th>跳转链接</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><div class="thumb" style="width:120px;height:40px;">1920×800</div></td><td>让生活回归本然的质感</td><td>原创设计 · 人体工程学</td><td>/products</td><td>1</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('bannerDrawer','编辑轮播图')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('轮播图','让生活回归本然',this.closest('tr'))">删除</button></div></td></tr>
+            <tr><td><div class="thumb" style="width:120px;height:40px;">1920×800</div></td><td>原木系列 · 自然生长的家</td><td>2026 新品发布</td><td>/products</td><td>2</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('bannerDrawer','编辑轮播图')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('轮播图','原木系列',this.closest('tr'))">删除</button></div></td></tr>
+            <tr><td><div class="thumb" style="width:120px;height:40px;">1920×800</div></td><td>上海旗舰体验店现已开放</td><td>线下体验</td><td>/contact</td><td>3</td><td><span class="tag tag-green">启用</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('bannerDrawer','编辑轮播图')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete('轮播图','体验店开放',this.closest('tr'))">删除</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 首页推荐位 (BR-51) ============ -->
+      <section class="page" id="page-homepage-recommend">
+        <div class="page-head"><h2>首页推荐位</h2><p>推荐产品聚合 + 企业亮点文案 + 品牌标语维护（BR-51）</p></div>
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="font-size:15px; margin-bottom:14px; font-weight:600;">精选产品（首页推荐，最多 8 个 BR-20）</h3>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <span class="tag tag-orange">胡桃木餐桌</span><span class="tag tag-orange">云朵布艺沙发</span><span class="tag tag-orange">简逸休闲椅</span><span class="tag tag-orange">原木餐边柜</span>
+            <span class="tag tag-orange">北欧风双人床</span><span class="tag tag-orange">极简书架组合</span><span class="tag tag-gray">+2 已选（共 8）</span>
+          </div>
+          <p style="color:var(--t3); font-size:12px; margin-top:10px;">标记来源：产品列表「首页推荐」开关（BR-20）自动聚合。</p>
+        </div>
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="font-size:15px; margin-bottom:14px; font-weight:600;">企业亮点文案（最多 4 条 BR-51）</h3>
+          <div class="kv-row" style="margin-bottom:10px;"><input class="in" value="原创设计" /><input class="in" value="独立设计团队，理念驱动每一件作品" /></div>
+          <div class="kv-row" style="margin-bottom:10px;"><input class="in" value="人体工程学" /><input class="in" value="尺度贴合身体，久坐亦舒适从容" /></div>
+          <div class="kv-row" style="margin-bottom:10px;"><input class="in" value="智能制造" /><input class="in" value="数字化产线，品质稳定可追溯" /></div>
+          <div class="kv-row"><input class="in" value="贴心服务" /><input class="in" value="从选品到售后，全程陪伴到家" /></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px; margin-bottom:14px; font-weight:600;">品牌标语（存于 sys_config BR-51 / FR-09）</h3>
+          <div class="form-item" style="margin-bottom:14px;"><label>Slogan</label><input class="in" value="本然，是生活的本来面目" style="max-width:420px;" /></div>
+          <div class="form-item"><label>副标语</label><input class="in" value="我们相信，好的家居不喧哗" style="max-width:420px;" /></div>
+          <div style="margin-top:18px;"><button class="btn btn-primary" onclick="toast('success','保存成功')">保存</button></div>
+        </div>
+      </section>
+
+      <!-- ============ 在线预约 (BR-52~BR-56) ============ -->
+      <section class="page" id="page-appointment-list">
+        <div class="page-head"><h2>在线预约</h2><p>留资线索管理 + 状态流转 + 导出（BR-52~BR-56）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>状态</label><select class="in" id="apptStatusFilter" style="min-width:130px;" onchange="filterTable('page-appointment-list', this.value, 6)"><option value="">全部</option><option value="待处理">待处理</option><option value="已联系">已联系</option><option value="已到店">已到店</option><option value="已关闭">已关闭</option></select></div>
+          <div class="field"><label>提交时间</label><input class="in" type="date" /></div>
+          <div class="field"><label>搜索</label><input class="in" id="apptSearch" placeholder="姓名 / 电话" oninput="searchTable('page-appointment-list',this.value,[0,1,4])" /></div>
+          <div class="spacer"></div>
+          <button class="btn" onclick="toast('success','已导出 Excel')">导出 Excel</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>姓名</th><th>电话</th><th>门店/城市</th><th>预约时间</th><th>意向产品</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="待处理"><td>张女士</td><td>138****2026</td><td>上海旗舰店</td><td>2026-08-20</td><td>原木系列</td><td>2026-08-17 18:10</td><td><span class="tag tag-red">待处理</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('apptDrawer','预约详情')">详情</button></div></td></tr>
+            <tr data-status="已联系"><td>李先生</td><td>139****8821</td><td>杭州</td><td>2026-08-19</td><td>云朵布艺沙发</td><td>2026-08-17 16:40</td><td><span class="tag tag-orange">已联系</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('apptDrawer','预约详情')">详情</button></div></td></tr>
+            <tr data-status="已到店"><td>王同学</td><td>137****5566</td><td>深圳</td><td>2026-08-15</td><td>—</td><td>2026-08-14 11:02</td><td><span class="tag tag-green">已到店</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('apptDrawer','预约详情')">详情</button></div></td></tr>
+            <tr data-status="已关闭"><td>陈女士</td><td>135****3344</td><td>上海旗舰店</td><td>2026-08-10</td><td>胡桃木餐桌</td><td>2026-08-09 09:30</td><td><span class="tag tag-gray">已关闭</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('apptDrawer','预约详情')">详情</button></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pager"><button class="cur" onclick="goPage(this,0)">1</button><button onclick="goPage(this,0)">2</button><button onclick="goPage(this,0)">3</button><button onclick="goPage(this,1)">›</button></div>
+      </section>
+
+      <!-- ============ 在线留言 (BR-57~BR-60) ============ -->
+      <section class="page" id="page-message-list">
+        <div class="page-head"><h2>在线留言</h2><p>留言管理 + 状态标记 + 导出（BR-57~BR-60）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>状态</label><select class="in" id="msgStatusFilter" style="min-width:130px;" onchange="filterTable('page-message-list',this.value,5)"><option value="">全部</option><option value="待处理">待处理</option><option value="已处理">已处理</option></select></div>
+          <div class="field"><label>搜索</label><input class="in" id="msgSearch" placeholder="姓名 / 电话" oninput="searchTable('page-message-list',this.value,[0,1,4])" /></div>
+          <div class="spacer"></div>
+          <button class="btn" onclick="toast('success','已导出 CSV')">导出 CSV</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>姓名</th><th>电话</th><th>邮箱</th><th>内容摘要</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="待处理"><td>陈女士</td><td>135****3399</td><td>chen@qq.com</td><td>想咨询原木餐桌的定制尺寸...</td><td>2026-08-17 17:30</td><td><span class="tag tag-red">待处理</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('msgDrawer','留言详情')">详情</button></div></td></tr>
+            <tr data-status="待处理"><td>赵先生</td><td>136****7711</td><td>—</td><td>请问杭州店周末营业到几点？</td><td>2026-08-17 15:20</td><td><span class="tag tag-red">待处理</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('msgDrawer','留言详情')">详情</button></div></td></tr>
+            <tr data-status="已处理"><td>孙女士</td><td>138****0044</td><td>sun@163.com</td><td>已下单，咨询配送时间</td><td>2026-08-16 09:11</td><td><span class="tag tag-green">已处理</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('msgDrawer','留言详情')">详情</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 用户管理 (BR-61) 仅超级管理员 ============ -->
+      <section class="page" id="page-user-list">
+        <div class="page-head"><h2>用户管理</h2><p>后台账号 CRUD + 停用启用 + 重置密码（BR-61）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>状态</label><select class="in" id="userStatusFilter" style="min-width:120px;" onchange="filterTable('page-user-list',this.value,3)"><option value="">全部</option><option value="启用">启用</option><option value="停用">停用</option></select></div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" onclick="openDrawer('userDrawer','新增用户')">+ 新增用户</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr data-status="启用"><td>admin</td><td>系统管理员</td><td><span class="tag tag-blue">超级管理员</span></td><td><span class="tag tag-green">启用</span></td><td>2026-08-17 18:25</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('userDrawer','编辑用户')">编辑</button><button type="button" class="btn-act" onclick="toast('success','已向 admin 发送密码重置邮件')">重置密码</button></div></td></tr>
+            <tr data-status="启用"><td>editor01</td><td>内容编辑小王</td><td><span class="tag tag-green">内容编辑</span></td><td><span class="tag tag-green">启用</span></td><td>2026-08-17 17:05</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('userDrawer','编辑用户')">编辑</button><button type="button" class="btn-act" onclick="toast('success','已向 editor01 发送密码重置邮件')">重置密码</button><button type="button" class="btn-act-del" onclick="toggleUserStatus(this.closest('tr'),'editor01')">停用</button></div></td></tr>
+            <tr data-status="停用"><td>editor02</td><td>内容编辑小李</td><td><span class="tag tag-green">内容编辑</span></td><td><span class="tag tag-gray">停用</span></td><td>2026-08-12 10:00</td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer('userDrawer','编辑用户')">编辑</button><button type="button" class="btn-act" onclick="toast('success','已向 editor02 发送密码重置邮件')">重置密码</button><button type="button" class="btn-act" onclick="toggleUserStatus(this.closest('tr'),'editor02')">启用</button></div></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 角色权限 (BR-62) ============ -->
+      <section class="page" id="page-role-list">
+        <div class="page-head"><h2>角色权限</h2><p>角色-权限点配置（BR-62）</p></div>
+        <div class="toolbar"><span class="tag tag-blue" style="cursor:pointer;user-select:none;" onclick="switchRole('admin')" id="roleAdmin">超级管理员</span><span class="tag tag-green" style="cursor:pointer;user-select:none;" onclick="switchRole('editor')" id="roleEditor">内容编辑</span></div>
+        <div id="roleHint" style="padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px;"></div>
+        <div class="card">
+          <h3 id="rolePermTitle" style="font-size:15px; margin-bottom:14px; font-weight:600;">权限点配置 · 当前角色</h3>
+          <table class="table">
+            <thead><tr><th>模块</th><th>权限点</th><th>内容编辑</th><th>超级管理员</th></tr></thead>
+            <tbody>
+              <tr><td>产品管理</td><td>product:view / create / edit / delete</td><td><span class="tag tag-green">✓</span></td><td><span class="tag tag-green">✓</span></td></tr>
+              <tr><td>案例管理</td><td>case:view / create / edit / delete</td><td><span class="tag tag-green">✓</span></td><td><span class="tag tag-green">✓</span></td></tr>
+              <tr><td>新闻管理</td><td>news:view / create / edit / delete</td><td><span class="tag tag-green">✓</span></td><td><span class="tag tag-green">✓</span></td></tr>
+              <tr><td>留资管理</td><td>lead:view / export</td><td><span class="tag tag-green">✓</span></td><td><span class="tag tag-green">✓</span></td></tr>
+              <tr><td>系统管理</td><td>system:user / role / log</td><td><span class="tag tag-gray">✗ 无权限</span></td><td><span class="tag tag-green">✓</span></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:18px;"><button class="btn btn-primary" onclick="toast('success','权限已保存')">保存权限</button></div>
+        </div>
+      </section>
+
+      <!-- ============ 操作日志 (BR-63) ============ -->
+      <section class="page" id="page-log-list">
+        <div class="page-head"><h2>操作日志</h2><p>关键操作审计记录，只读（BR-63）</p></div>
+        <div class="toolbar">
+          <div class="field"><label>模块</label><select class="in" id="logModuleFilter" style="min-width:130px;" onchange="filterLogModule(this.value)"><option value="">全部模块</option><option value="产品">产品</option><option value="新闻">新闻</option><option value="预约">预约</option><option value="用户">用户</option></select></div>
+          <div class="field"><label>操作人</label><input class="in" id="logSearch" placeholder="操作人" oninput="searchLog(this.value)" /></div>
+          <div class="field"><label>时间区间</label><input class="in" type="date" /></div>
+          <div class="spacer"></div>
+          <span style="color:var(--t3); font-size:12px;">日志只读，不可删除/导出</span>
+        </div>
+        <table class="table">
+          <thead><tr><th>操作人</th><th>模块</th><th>动作</th><th>详情</th><th>IP</th><th>时间</th></tr></thead>
+          <tbody>
+            <tr data-module="产品"><td>admin</td><td>产品</td><td>下架</td><td>下架产品：北欧风双人床</td><td>10.20.1.5</td><td>2026-08-17 18:20</td></tr>
+            <tr data-module="新闻"><td>editor01</td><td>新闻</td><td>新增</td><td>发布文章：STK 全新原木系列正式发布</td><td>10.20.1.8</td><td>2026-08-17 17:05</td></tr>
+            <tr data-module="预约"><td>admin</td><td>预约</td><td>状态流转</td><td>预约 #AP20260817-003 → 已联系</td><td>10.20.1.5</td><td>2026-08-17 16:40</td></tr>
+            <tr data-module="用户"><td>admin</td><td>用户</td><td>重置密码</td><td>重置用户 editor02 密码</td><td>10.20.1.5</td><td>2026-08-17 15:10</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============ 修改密码 (BR-05/BR-64) ============ -->
+      <section class="page" id="page-change-pwd">
+        <div class="page-head"><h2>修改密码</h2><p>当前密码校验 + 新密码强度校验（BR-05 / BR-64）</p></div>
+        <div class="card" style="max-width:460px;">
+          <div class="form-item" style="margin-bottom:18px;"><label>当前密码 <span class="req" style="color:#cf1322;">*</span></label><input class="in" type="password" id="cpOldPwd" placeholder="请输入当前密码" /></div>
+          <div class="form-item" style="margin-bottom:18px;"><label>新密码 <span class="req" style="color:#cf1322;">*</span></label><input class="in" type="password" id="cpNewPwd" placeholder="至少 8 位，含字母和数字" /></div>
+          <div class="form-item" style="margin-bottom:18px;"><label>确认新密码 <span class="req" style="color:#cf1322;">*</span></label><input class="in" type="password" id="cpConfirmPwd" placeholder="再次输入新密码" /></div>
+          <button class="btn btn-primary" onclick="doChangePwd()">确认修改</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================ Modal / Drawer 容器 ============================ -->
+<div class="mask" id="modalMask" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox">
+    <div class="modal-head"><span id="modalTitle">标题</span><span class="x" onclick="closeModal()">×</span></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="submitModal()">确定</button></div>
+  </div>
+</div>
+
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawerBox">
+  <div class="drawer-head"><span id="drawerTitle">标题</span><span class="x" onclick="closeDrawer()">×</span></div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot"><button class="btn" onclick="closeDrawer()">取消</button><button class="btn btn-primary" onclick="submitDrawer()">保存</button></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ===== 安全存储：兼容 localStorage 不可用环境（部分预览沙箱 / file://） ===== */
+var _memStore = {};
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return (k in _memStore) ? _memStore[k] : null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){ _memStore[k]=v; } }
+function lsDel(k){ try { localStorage.removeItem(k); } catch(e){ delete _memStore[k]; } }
+
+/* ===== 产品数据层：与官网产品中心共享 localStorage（STK 打通联动） ===== */
+var STK_PRODUCTS_LS = 'stk_products';
+/* 把后台产品列表表格序列化为数组写入 localStorage，官网读取后渲染 */
+function syncProductsToStorage(){
+  var tbody = document.querySelector('#page-product-list tbody');
+  if(!tbody) return;
+  var arr = [];
+  tbody.querySelectorAll('tr').forEach(function(tr){
+    if(tr.classList.contains('no-data-row')) return;
+    var tds = tr.querySelectorAll('td');
+    var name = tds[2] ? tds[2].textContent.trim() : '';
+    if(!name) return;
+    var series = tds[3] ? tds[3].textContent.trim() : '';
+    var priceTxt = tds[4] ? tds[4].textContent.trim() : '';
+    var price = (priceTxt && priceTxt !== '价格面议') ? (Number(priceTxt.replace(/[¥,\s]/g,'')) || null) : null;
+    var recTxt = tds[5] ? tds[5].textContent.trim() : '普通';
+    var status = tr.getAttribute('data-status') || (tds[6] ? tds[6].textContent.trim() : '上架');
+    var sort = tds[7] ? (Number(tds[7].textContent.trim()) || 99) : 99;
+    arr.push({ name:name, series:series, price:price, recommend:(recTxt==='推荐'), status:status, sort:sort });
+  });
+  lsSet(STK_PRODUCTS_LS, JSON.stringify(arr));
+}
+/* 上下架切换：改行状态 + 按钮文字 + 同步 storage */
+function toggleProductStatus(btn){
+  var row = btn.closest('tr'); if(!row) return;
+  var cur = row.getAttribute('data-status') || '上架';
+  var next = (cur === '上架') ? '下架' : '上架';
+  row.setAttribute('data-status', next);
+  var tagCell = row.querySelector('td:nth-child(7)');
+  if(tagCell){ var tag = tagCell.querySelector('.tag'); if(tag){ tag.textContent = next; tag.className = 'tag ' + statusTagClass(next); } }
+  btn.textContent = (next === '上架') ? '下架' : '上架';
+  syncProductsToStorage();
+  var nm = row.querySelector('td:nth-child(3)');
+  toast('success', (nm ? nm.textContent.trim() : '产品') + ' 已' + next);
+}
+/* 新增产品：先插一个空行并绑定 editingRow，再打开 Drawer（避免新增无效） */
+function openAddProduct(){
+  var tbody = document.querySelector('#page-product-list tbody');
+  if(!tbody) return;
+  var tr = document.createElement('tr');
+  tr.setAttribute('data-series','原木系列');
+  tr.setAttribute('data-status','上架');
+  tr.setAttribute('data-desc','');
+  tr.innerHTML = '<td><input type="checkbox"/></td><td><div class="thumb">图</div></td>'
+    + '<td>新款产品</td><td>原木系列</td><td>价格面议</td>'
+    + '<td><span class="tag tag-gray">普通</span></td><td><span class="tag tag-green">上架</span></td><td>99</td>'
+    + '<td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer(\'prodDrawer\',\'编辑产品\')">编辑</button><button type="button" class="btn-act" onclick="toggleProductStatus(this)">下架</button><button type="button" class="btn-act-del" onclick="confirmDelete(\'产品\',this.closest(\'tr\').querySelector(\'td:nth-child(3)\').textContent.trim(),this.closest(\'tr\'))">删除</button></div></td>';
+  tbody.appendChild(tr);
+  editingRow = tr;
+  openDrawer('prodDrawer','新增产品');
+}
+/* 页面加载即把当前 8 款同步到 storage，保证官网首次读取一致 */
+function initProductsSync(){ syncProductsToStorage(); }
+initProductsSync();
+
+/* ===== 招聘数据层：与官网招聘中心共享 localStorage（STK 前后台打通联动） ===== */
+var STK_JOBS_LS = 'stk_jobs';
+function escapeHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function syncJobsToStorage(){
+  var tbody = document.querySelector('#page-job-list tbody');
+  if(!tbody) return;
+  var arr = [];
+  tbody.querySelectorAll('tr').forEach(function(row){
+    var tds = row.querySelectorAll('td');
+    if(tds.length < 6) return;
+    var name = tds[0].textContent.trim();
+    var category = row.getAttribute('data-category') || tds[1].textContent.trim();
+    var city = tds[2].textContent.trim();
+    var type = tds[3].textContent.trim();
+    var urgentTxt = tds[4].textContent.trim();
+    var status = row.getAttribute('data-status') || tds[5].textContent.trim();
+    var duty = row.getAttribute('data-duty') || '';
+    var require = row.getAttribute('data-require') || '';
+    var date = row.getAttribute('data-date') || '';
+    arr.push({ name:name, category:category, city:city, type:type, urgent:(urgentTxt==='急招'), status:status, duty:duty, require:require, date:date });
+  });
+  lsSet(STK_JOBS_LS, JSON.stringify(arr));
+}
+function loadJobsFromStorage(){
+  var s = lsGet(STK_JOBS_LS);
+  if(!s) return;
+  try{
+    var arr = JSON.parse(s);
+    var tbody = document.querySelector('#page-job-list tbody');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    arr.forEach(function(j){
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-category', j.category);
+      tr.setAttribute('data-status', j.status);
+      tr.setAttribute('data-duty', j.duty || '');
+      tr.setAttribute('data-require', j.require || '');
+      tr.setAttribute('data-date', j.date || '');
+      tr.innerHTML = '<td>'+escapeHtml(j.name)+'</td><td>'+escapeHtml(j.category)+'</td><td>'+escapeHtml(j.city)+'</td><td>'+escapeHtml(j.type)+'</td><td><span class="tag '+(j.urgent?'tag-red':'tag-gray')+'">'+(j.urgent?'急招':'—')+'</span></td><td><span class="tag '+statusTagClass(j.status)+'">'+escapeHtml(j.status)+'</span></td><td><div class="table-actions"><button type="button" class="btn-act" onclick="openDrawer(\'jobDrawer\',\'编辑职位\')">编辑</button><button type="button" class="btn-act-del" onclick="confirmDelete(\'职位\',this.closest(\'tr\').querySelector(\'td:nth-child(1)\').textContent.trim(),this.closest(\'tr\'))">删除</button></div></td>';
+      tbody.appendChild(tr);
+    });
+  }catch(e){}
+}
+function initJobsSync(){ loadJobsFromStorage(); syncJobsToStorage(); }
+initJobsSync();
+
+/* ===== 凭证管理（原型级：内存/localStorage 双写） ===== */
+var _credentials = {};  // { '用户名': '密码明文' }
+function getCreds(){ var s=lsGet('stk_admin_creds'); if(s){ try{ _credentials=JSON.parse(s); }catch(e){} } return _credentials; }
+function saveCreds(){ lsSet('stk_admin_creds',JSON.stringify(_credentials)); }
+// 首次初始化默认账号
+(function(){
+  getCreds();
+  if(Object.keys(_credentials).length===0){
+    _credentials['admin']='admin123';
+    saveCreds();
+  }
+})();
+
+var currentRole='admin';  // 在登录恢复逻辑之前声明，避免 TDZ 报错
+
+/* ===== 登录 BR-01（真实校验凭证） ===== */
+function doLogin(e){
+  e.preventDefault();
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPwd').value;
+  if(!u||!p){ toast('error','请输入账号和密码'); return false; }
+  getCreds();
+  if(!_credentials[u] || _credentials[u]!==p){ toast('error','账号或密码错误'); return false; }
+  // 校验通过 → 登录
+  lsSet('stk_admin_logged_in','true');
+  lsSet('stk_admin_user',u);
+  document.getElementById('loginWrap').classList.add('hidden');
+  document.getElementById('appLayout').classList.remove('hidden');
+  applyRole();
+  refreshStats();
+  return false;
+}
+function logout(){
+  lsDel('stk_admin_logged_in');
+  lsDel('stk_admin_user');
+  document.getElementById('appLayout').classList.add('hidden');
+  document.getElementById('loginWrap').classList.remove('hidden');
+}
+
+/* ===== 修改密码（真实校验 + 更新凭证） ===== */
+function doChangePwd(){
+  var oldPwd = document.getElementById('cpOldPwd').value;
+  var newPwd = document.getElementById('cpNewPwd').value;
+  var confirmPwd = document.getElementById('cpConfirmPwd').value;
+  if(!oldPwd || !newPwd || !confirmPwd){ toast('error','请填写所有字段'); return; }
+  // 校验当前密码
+  getCreds();
+  var currentUser = lsGet('stk_admin_user') || 'admin';
+  if(_credentials[currentUser] !== oldPwd){ toast('error','当前密码输入错误'); return; }
+  // 新密码校验
+  if(newPwd.length < 8){ toast('error','新密码至少需要 8 位'); return; }
+  if(!/[a-zA-Z]/.test(newPwd) || !/[0-9]/.test(newPwd)){ toast('error','新密码需同时包含字母和数字'); return; }
+  if(newPwd !== confirmPwd){ toast('error','两次输入的新密码不一致'); return; }
+  // 更新凭证
+  _credentials[currentUser] = newPwd;
+  saveCreds();
+  // 清空表单
+  document.getElementById('cpOldPwd').value = '';
+  document.getElementById('cpNewPwd').value = '';
+  document.getElementById('cpConfirmPwd').value = '';
+  toast('success','密码修改成功！下次登录请使用新密码');
+}
+/* 页面加载时检查登录状态 */
+(function(){
+  if(lsGet('stk_admin_logged_in')==='true'){
+    document.getElementById('loginWrap').classList.add('hidden');
+    document.getElementById('appLayout').classList.remove('hidden');
+    applyRole();
+    refreshStats();
+  }
+})();
+
+/* ===== 导航 ===== */
+const pageTitles={dashboard:'工作台', 'product-category':'产品系列', 'product-list':'产品列表', 'case-list':'案例列表', 'news-category':'新闻栏目', 'news-list':'新闻列表', 'job-list':'职位列表', 'content-about':'关于STK', 'content-milestone':'发展历程', 'content-brand':'品牌介绍', 'content-policy':'售后服务政策', 'content-faq':'常见问题 FAQ', 'store-list':'门店管理', 'banner-list':'轮播图管理', 'homepage-recommend':'首页推荐位', 'appointment-list':'在线预约', 'message-list':'在线留言', 'user-list':'用户管理', 'role-list':'角色权限', 'log-list':'操作日志', 'change-pwd':'修改密码'};
+let lastClickedMenu = null;
+function navTo(page){ openPage(page); }
+/* 子菜单项：点击导航 */
+document.querySelectorAll('#sideMenu .menu-sub .menu-item').forEach(it=>{
+  it.addEventListener('click',function(e){
+    const p=this.getAttribute('data-page');
+    if(p){ lastClickedMenu = this; openPage(p); }
+  });
+});
+/* 父级菜单头：点击展开/折叠 */
+document.querySelectorAll('#sideMenu .menu-parent > .menu-item').forEach(it=>{
+  it.addEventListener('click',function(e){
+    this.closest('.menu-parent').classList.toggle('open');
+  });
+});
+/* 初始化：展开当前 active 菜单所在的父级 */
+function initMenuAccordion(){
+  var active = document.querySelector('#sideMenu .menu-item.active');
+  if(active){
+    var parent = active.closest('.menu-parent');
+    if(parent) parent.classList.add('open');
+  }
+}
+initMenuAccordion();
+function openPage(page){
+  document.querySelectorAll('#contentRoot .page').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('page-'+page); if(el) el.classList.add('active');
+  // 只高亮实际点击的菜单项，不级联到同 data-page 的父/子项
+  document.querySelectorAll('#sideMenu .menu-item').forEach(function(m){
+    m.classList.remove('active');
+  });
+  // 优先使用点击的元素，否则按 data-page 匹配（首次进入或程序化跳转）
+  var target = null;
+  if(lastClickedMenu && lastClickedMenu.getAttribute('data-page')===page){
+    target = lastClickedMenu;
+  } else {
+    // 找第一个匹配的（优先子项，再找父项）
+    var candidates = document.querySelectorAll('#sideMenu .menu-item[data-page="'+page+'"]');
+    target = candidates[candidates.length-1] || candidates[0]; // 优先取更深层级的子项
+  }
+  if(target) target.classList.add('active');
+  /* 切换页面后，展开当前页所在的父级菜单 */
+  document.querySelectorAll('#sideMenu .menu-parent.open').forEach(function(p){ p.classList.remove('open'); });
+  if(target){
+    var parent = target.closest('.menu-parent');
+    if(parent) parent.classList.add('open');
+  }
+  document.getElementById('crumbPage').textContent = pageTitles[page]||'';
+  document.getElementById('contentRoot').scrollTop=0; window.scrollTo({top:0});
+  initContentEditors();
+}
+
+
+/* ===== 单页内容管理与官网同步 ===== */
+const CONTENT_LS_PREFIX = 'STK_CONTENT_';
+function contentKey(k){ return CONTENT_LS_PREFIX + k.toUpperCase(); }
+function loadContent(key){
+  try { return localStorage.getItem(contentKey(key)); } catch(e){ return null; }
+}
+function saveContent(key){
+  var editor = document.querySelector('.content-editor[data-content-key="'+key+'"]');
+  if(!editor){ toast('error','未找到编辑器'); return; }
+  try {
+    localStorage.setItem(contentKey(key), editor.value);
+    var tip = document.getElementById(key+'SaveTip');
+    if(tip){ tip.textContent = '已保存并同步到官网'; setTimeout(function(){ tip.textContent=''; },2000); }
+    toast('success','保存成功，官网已同步');
+  } catch(e){ toast('error','保存失败：'+e.message); }
+}
+function initContentEditors(){
+  document.querySelectorAll('.content-editor').forEach(function(el){
+    var key = el.getAttribute('data-content-key');
+    if(!key) return;
+    var saved = loadContent(key);
+    if(saved !== null && saved !== el.value) el.value = saved;
+  });
+}
+function saveFaqContent(){
+  var rows = document.querySelectorAll('#faqTableBody tr');
+  var list = [];
+  rows.forEach(function(tr){
+    var cells = tr.querySelectorAll('td');
+    if(!cells.length) return;
+    list.push({
+      q: cells[0] ? cells[0].textContent.trim() : '',
+      a: tr.getAttribute('data-answer') || (cells[2] ? cells[2].textContent.trim() : ''),
+      cat: cells[1] ? cells[1].textContent.trim() : '',
+      sort: cells[3] ? cells[3].textContent.trim() : '',
+      status: tr.getAttribute('data-status') || '启用'
+    });
+  });
+  try {
+    localStorage.setItem(contentKey('faq'), JSON.stringify(list));
+    var tip = document.getElementById('faqSaveTip');
+    if(tip){ tip.textContent = '已保存 '+list.length+' 条 FAQ 并同步到官网'; setTimeout(function(){ tip.textContent=''; },2000); }
+    toast('success','FAQ 保存成功');
+  } catch(e){ toast('error','保存失败：'+e.message); }
+}
+/* ===== /单页内容管理 ===== */
+
+/* ===== 角色切换演示 BR-03 ===== */
+function switchRole(role){
+  currentRole=role;
+  document.getElementById('roleAdmin').classList.toggle('on', role==='admin');
+  document.getElementById('roleEditor').classList.toggle('on', role==='editor');
+  applyRole();
+  toast('success', role==='admin'?'已切换为超级管理员（含系统管理）':'已切换为内容编辑（无系统管理权限）');
+}
+function applyRole(){
+  document.querySelectorAll('.role-only-admin').forEach(el=>{
+    el.style.display = currentRole==='admin' ? '' : 'none';
+  });
+  // 更新角色权限页的动态提示
+  const hint=document.getElementById('roleHint');
+  const title=document.getElementById('rolePermTitle');
+  if(hint){
+    if(currentRole==='admin'){
+      hint.style.background='#f6ffed'; hint.style.color='#389e0d'; hint.border='1px solid #b7eb8f';
+      hint.innerHTML='✅ 当前角色：<b>超级管理员</b> — 拥有全部权限，可访问系统管理（用户/角色/日志/修改密码）';
+    } else {
+      hint.style.background='#fffbe6'; hint.color='#d48806'; hint.border='1px solid #ffe58f';
+      hint.innerHTML='🔒 当前角色：<b>内容编辑</b> — 仅内容管理权限（产品/案例/新闻/留资/招聘），系统管理已隐藏';
+    }
+  }
+  if(title){ title.textContent='权限点配置 · '+(currentRole==='admin'?'超级管理员':'内容编辑'); }
+  // 内容编辑默认停在内容管理页，若当前正处于系统管理页则回退
+  if(currentRole==='editor'){
+    const active=document.querySelector('#contentRoot .page.active');
+    const sysPages=['page-user-list','page-role-list','page-log-list','page-change-pwd'];
+    if(active && sysPages.includes(active.id)){ openPage('product-list'); }
+  }
+}
+
+/* ===== Modal ===== */
+const modalBodies={
+  catModal:`<div class="form-item"><label>系列名称 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="请输入系列名称"/></div>
+    <div class="form-item"><label>封面图（选填）</label><div class="upload drawer-img" onclick="triggerUpload(this)">点击上传图片（jpg/png/webp，≤5MB）<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)"/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序值</label><input class="in drawer-sort" type="number" value="1"/></div>
+    <div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div></div>`,
+  newsCatModal:`<div class="form-item"><label>栏目名称 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="如：企业新闻"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序值</label><input class="in drawer-sort" type="number" value="1"/></div>
+    <div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div></div>`,
+  msModal:`<div class="kv-row"><div class="form-item" style="flex:1"><label>年份 <span style="color:#cf1322">*</span></label><input class="in drawer-year" value="2026"/></div>
+    <div class="form-item" style="flex:1"><label>排序值</label><input class="in drawer-sort" type="number" value="1"/></div></div>
+    <div class="form-item"><label>事件标题 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="如：品牌升级"/></div>
+    <div class="form-item"><label>事件描述</label><textarea class="in drawer-desc" placeholder="事件说明"></textarea></div>`
+};
+/* ===== 编辑状态回写：追踪当前编辑行 ===== */
+var editingRow = null;       // 当前被编辑的表格行
+var currentEditKey = null;   // 当前打开的 Drawer/Modal 的 key
+
+function statusTagClass(v){
+  if(['启用','上架','发布','招聘中','已到店'].includes(v)) return 'tag-green';
+  if(['停用','下架','下线','已关闭','已处理'].includes(v)) return 'tag-gray';
+  if(v==='待处理') return 'tag-red';
+  if(v==='已联系') return 'tag-orange';
+  return 'tag-gray';
+}
+/* 各 Drawer/Modal 的状态列索引（1-based），与表格表头对应 */
+var statusColMap = {
+  prodDrawer:7, caseDrawer:5, newsDrawer:5, jobDrawer:6, faqDrawer:5,
+  storeDrawer:6, bannerDrawer:6, apptDrawer:7, msgDrawer:6, userDrawer:4,
+  catModal:5, newsCatModal:3
+};
+/* 保存时把 Drawer/Modal 里最后一个 select（即状态字段）的值写回表格行 */
+function applyStatusToRow(containerId){
+  if(!editingRow || !currentEditKey) return;
+  var col = statusColMap[currentEditKey];
+  if(!col) return;
+  var cell = editingRow.querySelector('td:nth-child('+col+')');
+  if(!cell) return;
+  var selects = document.querySelectorAll('#'+containerId+' select');
+  var val = selects.length ? selects[selects.length-1].value : null;
+  if(!val) return;
+  var tag = cell.querySelector('.tag');
+  if(tag){ tag.textContent = val; tag.className = 'tag ' + statusTagClass(val); }
+  else { cell.innerHTML = '<span class="tag '+statusTagClass(val)+'">'+val+'</span>'; }
+  editingRow.setAttribute('data-status', val);
+}
+
+/* ===== Modal ===== */
+function openModal(key,title){ currentEditKey=key; document.getElementById('modalTitle').textContent=title; document.getElementById('modalBody').innerHTML=modalBodies[key]||''; document.getElementById('modalMask').classList.add('show'); if(editingRow && /编辑/.test(title)) fillDrawerFromRow('modalBody'); }
+function closeModal(){ document.getElementById('modalMask').classList.remove('show'); }
+function submitModal(){ writeModalToRow(); applyStatusToRow('modalBody'); closeModal(); toast('success','操作成功'); }
+
+/* 点击委托：记录被编辑的行（点「新增」则不记录，避免误写） */
+document.addEventListener('click', function(e){
+  var trig = e.target.closest('[onclick]');
+  if(!trig) return;
+  var oc = trig.getAttribute('onclick')||'';
+  if(/openDrawer\(|openModal\(/.test(oc)){
+    if(/新增/.test(oc)) editingRow = null;
+    else editingRow = trig.closest('tr');
+  }
+});
+
+/* ===== Drawer ===== */
+const drawerBodies={
+  prodDrawer:`<div class="form-item"><label>所属系列 <span style="color:#cf1322">*</span></label><select class="in drawer-series"><option>原木系列</option><option>软体系列</option><option>座椅系列</option><option>收纳系列</option></select></div>
+    <div class="form-item"><label>产品名称 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="请输入产品名称"/></div>
+    <div class="form-item"><label>价格（空=价格面议）</label><input class="in drawer-price" placeholder="如 4280" type="number"/></div>
+    <div class="form-item"><label>主图 + 图集（多图，单图≤5MB）</label><div class="upload drawer-img" onclick="triggerUpload(this)">点击上传图片<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)" multiple/></div></div>
+    <div class="form-item"><label>产品描述</label><textarea class="in drawer-desc" rows="5" placeholder="请输入产品描述"></textarea></div>
+    <div class="form-item"><label>规格参数（动态 参数名-值）</label>
+      <div class="kv-row"><input class="in" placeholder="材质"/><input class="in" placeholder="胡桃木"/><span class="btn btn-link-danger">×</span></div>
+      <div class="kv-row"><input class="in" placeholder="尺寸"/><input class="in" placeholder="1800×900"/><span class="btn btn-link-danger">×</span></div>
+      <a class="btn-link">+ 添加参数</a></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序</label><input class="in drawer-sort" type="number" value="1"/></div>
+    <div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>上架</option><option>下架</option></select></div></div>
+    <div class="form-item"><label><input type="checkbox" class="drawer-recommend" style="width:auto;margin-right:6px;"/>设为首页推荐（最多 8 个 BR-20）</label></div>`,
+  caseDrawer:`<div class="form-item"><label>案例标题 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="请输入标题"/></div>
+    <div class="form-item"><label>封面图</label><div class="upload drawer-img" onclick="triggerUpload(this)">点击上传封面<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)"/></div></div>
+    <div class="form-item"><label>空间类型标签（多选）</label><div style="display:flex;gap:8px;flex-wrap:wrap;" class="drawer-tags">
+      <span class="tag tag-gray" onclick="toggleTag(this)">客厅</span><span class="tag tag-gray" onclick="toggleTag(this)">卧室</span><span class="tag tag-gray" onclick="toggleTag(this)">餐厅</span><span class="tag tag-gray" onclick="toggleTag(this)">书房</span><span class="tag tag-gray" onclick="toggleTag(this)">办公</span></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>城市</label><input class="in drawer-city" placeholder="如 华东"/></div><div class="form-item" style="flex:1"><label>面积</label><input class="in drawer-area" placeholder="如 120㎡"/></div></div>
+    <div class="form-item"><label>完工时间</label><input class="in drawer-date" placeholder="如 2026.06"/></div>
+    <div class="form-item"><label>项目介绍</label><textarea class="in drawer-intro" rows="5" placeholder="请输入项目介绍"></textarea></div>
+    <div class="form-item"><label>实景图集（多图）</label><div class="upload drawer-imgs" onclick="triggerUpload(this)">点击上传图集<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)" multiple/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序</label><input class="in drawer-sort" type="number" value="1"/></div>
+    <div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>发布</option><option>下线</option></select></div></div>`,
+  newsDrawer:`<div class="form-item"><label>文章标题 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="请输入标题"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>所属栏目 <span style="color:#cf1322">*</span></label><select class="in drawer-category"><option>企业新闻</option><option>行业资讯</option></select></div>
+    <div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>已发布</option><option>草稿</option></select></div></div>
+    <div class="form-item"><label>封面图（选填）</label><div class="upload drawer-img" onclick="triggerUpload(this)">点击上传封面<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)"/></div></div>
+    <div class="form-item"><label>摘要（选填）</label><textarea class="in drawer-summary" placeholder="列表展示摘要"></textarea></div>
+    <div class="form-item"><label>正文</label><textarea class="in drawer-body" rows="8" placeholder="请输入文章正文"></textarea></div>`,
+  jobDrawer:`<div class="form-item"><label>职位名称 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="如 高级家具设计师"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>分类 <span style="color:#cf1322">*</span></label><select class="in drawer-category"><option>社会招聘</option><option>校园招聘</option></select></div>
+    <div class="form-item" style="flex:1"><label>工作地点 <span style="color:#cf1322">*</span></label><input class="in drawer-city" placeholder="如 上海"/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>职位类型</label><select class="in drawer-type"><option>全职</option><option>实习</option><option>校招</option></select></div>
+    <div class="form-item" style="flex:1"><label>薪资范围</label><input class="in drawer-salary" placeholder="如 15-25K"/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>发布日期</label><input class="in drawer-date" placeholder="如 2026.08.01"/></div>
+    <div class="form-item" style="flex:1; display:flex; align-items:center;"><label style="margin-bottom:0;"><input type="checkbox" class="drawer-urgent" style="width:auto;margin-right:6px;"/>急招标记</label></div></div>
+    <div class="form-item"><label>岗位职责</label><textarea class="in drawer-duty" rows="5" placeholder="请输入岗位职责"></textarea></div>
+    <div class="form-item"><label>任职要求</label><textarea class="in drawer-require" rows="5" placeholder="请输入任职要求"></textarea></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>简历投递方式 <span style="color:#cf1322">*</span></label><input class="in drawer-contact" placeholder="邮箱/联系人"/></div>
+    <div class="form-item" style="flex:1"><label>发布状态</label><select class="in drawer-status"><option>招聘中</option><option>已关闭</option></select></div></div>`,
+  faqDrawer:`<div class="form-item"><label>问题 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="请输入问题"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>分类（可选）</label><select class="in drawer-category"><option>产品</option><option>售后</option><option>配送</option></select></div>
+    <div class="form-item" style="flex:1"><label>排序</label><input class="in drawer-sort" type="number" value="1"/></div></div>
+    <div class="form-item"><label>答案（富文本）</label><textarea class="in drawer-answer" rows="6" placeholder="请输入答案"></textarea></div>
+    <div class="form-item"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div>`,
+  storeDrawer:`<div class="form-item"><label>门店名称 <span style="color:#cf1322">*</span></label><input class="in drawer-title" placeholder="如 上海旗舰店"/></div>
+    <div class="form-item"><label>城市（用于筛选） <span style="color:#cf1322">*</span></label><input class="in drawer-city" placeholder="如 杭州"/></div>
+    <div class="form-item"><label>详细地址 <span style="color:#cf1322">*</span></label><input class="in drawer-address" placeholder="街道/门牌"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>电话 <span style="color:#cf1322">*</span></label><input class="in drawer-phone" placeholder="400-xxx-xxxx"/></div>
+    <div class="form-item" style="flex:1"><label>营业时间</label><input class="in drawer-hours" placeholder="10:00-21:00"/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>经度（选填）</label><input class="in drawer-lng" placeholder="lng"/></div><div class="form-item" style="flex:1"><label>纬度（选填）</label><input class="in drawer-lat" placeholder="lat"/></div></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序</label><input class="in drawer-sort" type="number" value="1"/></div><div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div></div>`,
+  bannerDrawer:`<div class="form-item"><label>图片 <span style="color:#cf1322">*</span>（建议 1920×800）</label><div class="upload drawer-img" onclick="triggerUpload(this)">点击上传图片<input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)"/></div></div>
+    <div class="form-item"><label>标题（选填）</label><input class="in drawer-title" placeholder="轮播标题"/></div>
+    <div class="form-item"><label>副标题（选填）</label><input class="in drawer-subtitle" placeholder="副标题"/></div>
+    <div class="form-item"><label>跳转链接（选填）</label><input class="in drawer-link" placeholder="/products 或 外链"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>排序</label><input class="in drawer-sort" type="number" value="1"/></div><div class="form-item" style="flex:1"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div></div>`,
+  apptDrawer:`<div class="detail-grid drawer-detail">
+      <div class="k">姓名</div><div class="v-name"></div>
+      <div class="k">电话</div><div class="v-phone"></div>
+      <div class="k">门店/城市</div><div class="v-store"></div>
+      <div class="k">预约时间</div><div class="v-date"></div>
+      <div class="k">意向产品</div><div class="v-product"></div>
+      <div class="k">备注</div><div class="v-note"></div>
+      <div class="k">提交时间</div><div class="v-time"></div>
+      <div class="k">当前状态</div><div class="v-status"></div>
+    </div>
+    <div class="form-item"><label>状态流转（BR-54）</label><select class="in drawer-status"><option>待处理</option><option>已联系</option><option>已到店</option><option>已关闭</option></select></div>`,
+  msgDrawer:`<div class="detail-grid drawer-detail">
+      <div class="k">姓名</div><div class="v-name"></div>
+      <div class="k">电话</div><div class="v-phone"></div>
+      <div class="k">邮箱</div><div class="v-email"></div>
+      <div class="k">留言内容</div><div class="v-content"></div>
+      <div class="k">提交时间</div><div class="v-time"></div>
+      <div class="k">当前状态</div><div class="v-status"></div>
+    </div>
+    <div class="form-item"><label>状态标记（BR-59）</label><select class="in drawer-status"><option>待处理</option><option>已处理</option></select></div>`,
+  userDrawer:`<div class="form-item"><label>登录账号 <span style="color:#cf1322">*</span></label><input class="in drawer-username" placeholder="字母/数字"/></div>
+    <div class="kv-row"><div class="form-item" style="flex:1"><label>初始密码 <span style="color:#cf1322">*</span></label><input class="in drawer-password" type="password" placeholder="初始密码"/></div><div class="form-item" style="flex:1"><label>姓名</label><input class="in drawer-name" placeholder="姓名"/></div></div>
+    <div class="form-item"><label>角色</label><select class="in drawer-role"><option>内容编辑</option><option>超级管理员</option></select></div>
+    <div class="form-item"><label>状态</label><select class="in drawer-status"><option>启用</option><option>停用</option></select></div>`
+};
+/* ---- 图片上传交互 ---- */
+function triggerUpload(el){
+  var input = el.querySelector('input[type=file]');
+  if(input) input.click();
+}
+function onUploadChange(input){
+  var uploadDiv = input.closest('.upload');
+  if(!uploadDiv) return;
+  var files = input.files;
+  if(files && files.length){
+    uploadDiv.style.borderColor = '#6FA088';
+    uploadDiv.style.color = '#0F3D2E';
+    uploadDiv.style.background = '#f6ffed';
+    var names = [];
+    for(var i=0;i<files.length;i++) names.push(files[i].name);
+    var multi = input.multiple ? ' multiple' : '';
+    uploadDiv.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>已选择 '+files.length+' 个文件：'+names.join('、')+'</span><input type="file" accept="image/*" style="display:none" onchange="onUploadChange(this)"'+multi+'/>';
+  }
+}
+
+/* ---- 标签多选交互 ---- */
+function toggleTag(tag){
+  tag.classList.toggle('tag-gray');
+  tag.classList.toggle('tag-green');
+}
+
+/* ---- 根据 key 从 row 单元格提取纯文本 ---- */
+function cellText(row, idx){
+  if(!row) return '';
+  var cell = row.querySelector('td:nth-child('+(idx+1)+')');
+  return cell ? cell.textContent.trim() : '';
+}
+function setInput(container, cls, val){
+  var el = container.querySelector('.'+cls);
+  if(!el) return;
+  if(el.tagName === 'SELECT'){
+    if(val) el.value = val;
+  } else if(el.type === 'checkbox'){
+    el.checked = !!val;
+  } else {
+    el.value = val || '';
+  }
+}
+function setSelectByText(container, cls, text){
+  var sel = container.querySelector('.'+cls);
+  if(!sel || !text) return;
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].text === text){ sel.selectedIndex = i; break; }
+  }
+}
+function setTags(container, cls, text){
+  var wrap = container.querySelector('.'+cls);
+  if(!wrap || !text) return;
+  var tags = wrap.querySelectorAll('.tag');
+  tags.forEach(function(t){ t.className = 'tag tag-gray'; });
+  text.split(/[,，、]/).forEach(function(v){
+    v = v.trim();
+    tags.forEach(function(t){ if(t.textContent.trim()===v){ t.className = 'tag tag-green'; } });
+  });
+}
+
+/* ---- 打开 Drawer 时回填数据 ---- */
+function openDrawer(key,title){
+  currentEditKey=key;
+  document.getElementById('drawerTitle').textContent=title;
+  document.getElementById('drawerBody').innerHTML=drawerBodies[key]||'';
+  document.getElementById('drawerMask').classList.add('show');
+  document.getElementById('drawerBox').classList.add('show');
+  if(editingRow && /编辑|详情/.test(title)) fillDrawerFromRow('drawerBody');
+}
+function closeDrawer(){ document.getElementById('drawerMask').classList.remove('show'); document.getElementById('drawerBox').classList.remove('show'); }
+function submitDrawer(){ writeDrawerToRow('drawerBody'); applyStatusToRow('drawerBody'); closeDrawer(); toast('success','保存成功'); if(currentEditKey==='prodDrawer'){ syncProductsToStorage(); } if(currentEditKey==='jobDrawer'){ syncJobsToStorage(); } }
+
+function fillDrawerFromRow(containerId){
+  if(!editingRow || !currentEditKey) return;
+  var c = document.getElementById(containerId);
+  if(!c) return;
+  var key = currentEditKey;
+  // 预约/留言详情：用 .v-xxx 占位区回填
+  if(key==='apptDrawer'){
+    c.querySelector('.v-name').textContent = cellText(editingRow,0);
+    c.querySelector('.v-phone').textContent = cellText(editingRow,1);
+    c.querySelector('.v-store').textContent = cellText(editingRow,2);
+    c.querySelector('.v-date').textContent = cellText(editingRow,3);
+    c.querySelector('.v-product').textContent = cellText(editingRow,4);
+    c.querySelector('.v-time').textContent = cellText(editingRow,5);
+    c.querySelector('.v-status').innerHTML = editingRow.querySelector('td:nth-child(7)').innerHTML;
+    c.querySelector('.v-note').textContent = '—'; // 原型列表无备注列
+    setInput(c,'drawer-status', editingRow.getAttribute('data-status'));
+    return;
+  }
+  if(key==='msgDrawer'){
+    c.querySelector('.v-name').textContent = cellText(editingRow,0);
+    c.querySelector('.v-phone').textContent = cellText(editingRow,1);
+    c.querySelector('.v-email').textContent = cellText(editingRow,2);
+    c.querySelector('.v-content').textContent = cellText(editingRow,3);
+    c.querySelector('.v-time').textContent = cellText(editingRow,4);
+    c.querySelector('.v-status').innerHTML = editingRow.querySelector('td:nth-child(6)').innerHTML;
+    setInput(c,'drawer-status', editingRow.getAttribute('data-status'));
+    return;
+  }
+  // 各业务字段回填
+  if(key==='bannerDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,1));
+    setInput(c,'drawer-subtitle', cellText(editingRow,2));
+    setInput(c,'drawer-link', cellText(editingRow,3));
+    setInput(c,'drawer-sort', cellText(editingRow,4));
+    setInput(c,'drawer-status', cellText(editingRow,5));
+  } else if(key==='prodDrawer'){
+    setSelectByText(c,'drawer-series', editingRow.getAttribute('data-series')||cellText(editingRow,3));
+    setInput(c,'drawer-title', cellText(editingRow,2));
+    var priceText = cellText(editingRow,4).replace(/[¥,]/g,'').trim();
+    setInput(c,'drawer-price', priceText==='价格面议'?'':priceText);
+    setInput(c,'drawer-desc', editingRow.getAttribute('data-desc')||'');
+    setInput(c,'drawer-sort', cellText(editingRow,7));
+    setInput(c,'drawer-status', cellText(editingRow,6));
+    var rec = cellText(editingRow,5);
+    setInput(c,'drawer-recommend', rec==='推荐');
+  } else if(key==='caseDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,1));
+    setTags(c,'drawer-tags', editingRow.getAttribute('data-space')||cellText(editingRow,2));
+    setInput(c,'drawer-city', cellText(editingRow,3));
+    setInput(c,'drawer-intro', editingRow.getAttribute('data-intro')||'');
+    setInput(c,'drawer-sort', cellText(editingRow,5));
+    setInput(c,'drawer-status', cellText(editingRow,4));
+  } else if(key==='newsDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,1));
+    setSelectByText(c,'drawer-category', editingRow.getAttribute('data-category')||cellText(editingRow,2));
+    setInput(c,'drawer-body', editingRow.getAttribute('data-body')||'');
+    setInput(c,'drawer-status', cellText(editingRow,4));
+  } else if(key==='jobDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,0));
+    setSelectByText(c,'drawer-category', editingRow.getAttribute('data-category')||cellText(editingRow,1));
+    setInput(c,'drawer-city', cellText(editingRow,2));
+    setSelectByText(c,'drawer-type', cellText(editingRow,3));
+    setInput(c,'drawer-date', editingRow.getAttribute('data-date')||'');
+    setInput(c,'drawer-duty', editingRow.getAttribute('data-duty')||'');
+    setInput(c,'drawer-require', editingRow.getAttribute('data-require')||'');
+    setInput(c,'drawer-status', cellText(editingRow,5));
+    var urgent = cellText(editingRow,4);
+    setInput(c,'drawer-urgent', urgent==='急招');
+  } else if(key==='faqDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,0));
+    setSelectByText(c,'drawer-category', cellText(editingRow,1));
+    var faqAns = editingRow.getAttribute('data-answer')||'';
+    setInput(c,'drawer-answer', faqAns);
+    setInput(c,'drawer-sort', cellText(editingRow,3));
+    setInput(c,'drawer-status', cellText(editingRow,4));
+  } else if(key==='storeDrawer'){
+    setInput(c,'drawer-title', cellText(editingRow,0));
+    setInput(c,'drawer-city', cellText(editingRow,1));
+    setInput(c,'drawer-address', cellText(editingRow,2));
+    setInput(c,'drawer-phone', cellText(editingRow,3));
+    setInput(c,'drawer-hours', cellText(editingRow,4));
+    setInput(c,'drawer-status', cellText(editingRow,5));
+  } else if(key==='userDrawer'){
+    setInput(c,'drawer-username', cellText(editingRow,0));
+    setInput(c,'drawer-name', cellText(editingRow,1));
+    var roleText = cellText(editingRow,2);
+    setInput(c,'drawer-role', roleText.indexOf('管理员')!==-1?'超级管理员':'内容编辑');
+    setInput(c,'drawer-status', cellText(editingRow,3));
+  }
+}
+
+/* ---- 保存时把 Drawer 字段写回表格行 ---- */
+function writeDrawerToRow(containerId){
+  if(!editingRow || !currentEditKey) return;
+  var c = document.getElementById(containerId);
+  if(!c) return;
+  var key = currentEditKey;
+  function get(cls){ var el=c.querySelector('.'+cls); return el ? (el.type==='checkbox'?el.checked:el.value) : null; }
+  function setCell(idx, val, tagClassFn){
+    var cell = editingRow.querySelector('td:nth-child('+idx+')');
+    if(!cell) return;
+    if(tagClassFn && cell.querySelector('.tag')){
+      var tag = cell.querySelector('.tag');
+      tag.textContent = val;
+      tag.className = 'tag ' + tagClassFn(val);
+    } else {
+      cell.textContent = val;
+    }
+  }
+  if(key==='bannerDrawer'){
+    setCell(2, get('drawer-title'));
+    setCell(3, get('drawer-subtitle'));
+    setCell(4, get('drawer-link'));
+    setCell(5, get('drawer-sort'));
+    setCell(6, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='prodDrawer'){
+    setCell(3, get('drawer-title'));
+    setCell(4, get('drawer-series'));
+    var p = get('drawer-price'); setCell(5, p ? '¥ '+Number(p).toLocaleString() : '价格面议');
+    setCell(8, get('drawer-sort'));
+    setCell(7, get('drawer-status'), statusTagClass);
+    var rec = get('drawer-recommend');
+    var recCell = editingRow.querySelector('td:nth-child(6)');
+    if(recCell) recCell.innerHTML = '<span class="tag '+(rec?'tag-orange':'tag-gray')+'">'+(rec?'推荐':'普通')+'</span>';
+    editingRow.setAttribute('data-series', get('drawer-series'));
+    editingRow.setAttribute('data-desc', get('drawer-desc') || '');
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='caseDrawer'){
+    setCell(2, get('drawer-title'));
+    setCell(4, get('drawer-city'));
+    setCell(6, get('drawer-sort'));
+    setCell(5, get('drawer-status'), statusTagClass);
+    var tagsWrap = c.querySelector('.drawer-tags');
+    var selectedTags = [];
+    if(tagsWrap) tagsWrap.querySelectorAll('.tag-green').forEach(function(t){ selectedTags.push(t.textContent.trim()); });
+    var spaceCell = editingRow.querySelector('td:nth-child(3)');
+    if(spaceCell) spaceCell.innerHTML = selectedTags.map(function(s){ return '<span class="tag tag-gray">'+s+'</span>'; }).join('');
+    editingRow.setAttribute('data-space', selectedTags.join('、'));
+    editingRow.setAttribute('data-intro', get('drawer-intro') || '');
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='newsDrawer'){
+    setCell(2, get('drawer-title'));
+    var cat = get('drawer-category');
+    var catCell = editingRow.querySelector('td:nth-child(3)'); if(catCell) catCell.textContent = cat;
+    setCell(5, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-category', cat);
+    editingRow.setAttribute('data-body', get('drawer-body') || '');
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='jobDrawer'){
+    setCell(1, get('drawer-title'));
+    var catCell = editingRow.querySelector('td:nth-child(2)'); if(catCell) catCell.textContent = get('drawer-category');
+    var locCell = editingRow.querySelector('td:nth-child(3)'); if(locCell) locCell.textContent = get('drawer-city');
+    var typeCell = editingRow.querySelector('td:nth-child(4)'); if(typeCell) typeCell.textContent = get('drawer-type');
+    var urgent = get('drawer-urgent');
+    var urgentCell = editingRow.querySelector('td:nth-child(5)');
+    if(urgentCell) urgentCell.innerHTML = '<span class="tag '+(urgent?'tag-red':'tag-gray')+'">'+(urgent?'急招':'—')+'</span>';
+    setCell(6, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-category', get('drawer-category'));
+    editingRow.setAttribute('data-date', get('drawer-date') || '');
+    editingRow.setAttribute('data-duty', get('drawer-duty') || '');
+    editingRow.setAttribute('data-require', get('drawer-require') || '');
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='faqDrawer'){
+    setCell(1, get('drawer-title'));
+    var catCell = editingRow.querySelector('td:nth-child(2)'); if(catCell) catCell.textContent = get('drawer-category');
+    var ans = get('drawer-answer') || '';
+    var ansCell = editingRow.querySelector('td:nth-child(3)'); if(ansCell) ansCell.textContent = ans;
+    editingRow.setAttribute('data-answer', ans);
+    setCell(4, get('drawer-sort'));
+    setCell(5, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='storeDrawer'){
+    setCell(1, get('drawer-title'));
+    setCell(2, get('drawer-city'));
+    setCell(3, get('drawer-address'));
+    setCell(4, get('drawer-phone'));
+    setCell(5, get('drawer-hours'));
+    setCell(6, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  } else if(key==='userDrawer'){
+    setCell(1, get('drawer-username'));
+    var nameCell = editingRow.querySelector('td:nth-child(2)'); if(nameCell) nameCell.textContent = get('drawer-name');
+    var role = get('drawer-role');
+    var roleCell = editingRow.querySelector('td:nth-child(3)');
+    if(roleCell) roleCell.innerHTML = '<span class="tag '+(role==='超级管理员'?'tag-blue':'tag-green')+'">'+role+'</span>';
+    setCell(4, get('drawer-status'), statusTagClass);
+    editingRow.setAttribute('data-status', get('drawer-status'));
+  }
+}
+
+/* ---- 保存 Modal 时写回 ---- */
+function writeModalToRow(){
+  if(!editingRow || !currentEditKey) return;
+  var c = document.getElementById('modalBody');
+  if(!c) return;
+  var key = currentEditKey;
+  function get(cls){ var el=c.querySelector('.'+cls); return el ? el.value : null; }
+  if(key==='catModal'){
+    var nameCell = editingRow.querySelector('td:nth-child(2)'); if(nameCell) nameCell.textContent = get('drawer-title');
+    var sortCell = editingRow.querySelector('td:nth-child(3)'); if(sortCell) sortCell.textContent = get('drawer-sort');
+  } else if(key==='newsCatModal'){
+    var nameCell = editingRow.querySelector('td:nth-child(1)'); if(nameCell) nameCell.textContent = get('drawer-title');
+    var sortCell = editingRow.querySelector('td:nth-child(2)'); if(sortCell) sortCell.textContent = get('drawer-sort');
+  } else if(key==='msModal'){
+    var yearCell = editingRow.querySelector('td:nth-child(1)'); if(yearCell) yearCell.textContent = get('drawer-year');
+    var sortCell = editingRow.querySelector('td:nth-child(4)'); if(sortCell) sortCell.textContent = get('drawer-sort');
+    var titleCell = editingRow.querySelector('td:nth-child(2)'); if(titleCell) titleCell.textContent = get('drawer-title');
+    var descCell = editingRow.querySelector('td:nth-child(3)'); if(descCell) descCell.textContent = get('drawer-desc');
+  }
+}
+
+/* ===== Toast BR-67 ===== */
+function toast(type,msg){ const w=document.getElementById('toastWrap'); const t=document.createElement('div'); t.className='toast '+type; t.innerHTML='<span class="dot">'+(type==='success'?'✓':'!')+'</span>'+msg; w.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); },2200); }
+
+/* ===== 删除确认弹窗 ===== */
+function confirmDelete(type, name, rowElem){
+  var m = document.getElementById('confirmModal');
+  if(!m){
+    m = document.createElement('div'); m.id='confirmModal'; m.className='mask';
+    m.innerHTML = '<div class="modal" style="width:400px"><div class="modal-head"><span id="confirmTitle">确认删除</span><span class="x" onclick="closeConfirm()">&times;</span></div><div class="modal-body" id="confirmBody"></div><div class="modal-foot"><button class="btn" onclick="closeConfirm()" style="margin-right:8px">取消</button><button class="btn" id="confirmOkBtn" style="background:#cf1322;border-color:#cf1322;color:#fff">确认删除</button></div></div>';
+    document.body.appendChild(m);
+  }
+  document.getElementById('confirmTitle').textContent = '确认删除' + type;
+  document.getElementById('confirmBody').innerHTML = '<p style="color:var(--t2);font-size:14px;line-height:1.6">确定要删除 <b style="color:var(--ink)">'+name+'</b> 吗？<br/><span style="color:#cf1322;font-size:13px">此操作不可撤销。</span></p>';
+  /* 确认后真正删除行 */
+  document.getElementById('confirmOkBtn').onclick = function(){
+    closeConfirm();
+    var inProducts = rowElem && rowElem.closest('#page-product-list');
+    var inJobs = rowElem && rowElem.closest('#page-job-list');
+    if(rowElem && rowElem.parentNode){
+      rowElem.style.transition='opacity .25s'; rowElem.style.opacity='0';
+      setTimeout(function(){ rowElem.remove(); if(inProducts) syncProductsToStorage(); if(inJobs) syncJobsToStorage(); refreshStats(); },260);
+    } else { refreshStats(); }
+    toast('success','已删除：'+name);
+  };
+  m.classList.add('show');
+}
+function closeConfirm(){ var m=document.getElementById('confirmModal'); if(m) m.classList.remove('show'); }
+
+/* ===== 表格筛选功能 ===== */
+/* 单条件筛选：按 statusColIndex 列的 data-status 匹配 */
+function filterTable(pageId, val, statusColIndex) {
+  var section = document.getElementById(pageId);
+  if (!section) return;
+  var rows = section.querySelectorAll('.table tbody tr');
+  var visibleCount = 0;
+  rows.forEach(function(row) {
+    if (!val) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      var cell = row.querySelector('td:nth-child(' + (statusColIndex + 1) + ')');
+      var tagText = cell ? cell.textContent.trim() : '';
+      // 同时检查 data-status 属性和单元格文字
+      var match = (row.getAttribute('data-status') === val) || (tagText === val);
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    }
+  });
+  /* 无结果提示 */
+  var noData = section.querySelector('.no-data-row');
+  if (!visibleCount && val) {
+    if (!noData) {
+      noData = document.createElement('tr');
+      noData.className = 'no-data-row';
+      noData.innerHTML = '<td colspan="20" style="text-align:center;padding:30px;color:var(--t3);font-size:14px;">暂无匹配数据</td>';
+      section.querySelector('.table tbody').appendChild(noData);
+    }
+    noData.style.display = '';
+  } else if (noData) {
+    noData.style.display = 'none';
+  }
+}
+
+/* 多条件联合筛选（支持两个下拉框联动） */
+function filterTableMulti(pageId, val, dataAttr, siblingSelectId) {
+  var section = document.getElementById(pageId);
+  if (!section) return;
+  var rows = section.querySelectorAll('.table tbody tr');
+  var sibling = document.getElementById(siblingSelectId);
+  var sibVal = sibling ? sibling.value : '';
+  var visibleCount = 0;
+
+  rows.forEach(function(row) {
+    if (row.classList.contains('no-data-row')) return;
+    var match1 = !val || (row.getAttribute(dataAttr) === val);
+    var match2 = !sibVal || (row.getAttribute(dataAttr === 'data-status' ? 'data-status' :
+                  (siblingSelectId.includes('Space') ? 'data-space' :
+                   siblingSelectId.includes('Series') ? 'data-series' :
+                   siblingSelectId.includes('Cat') ? 'data-category' : 'data-status')) === sibVal);
+
+    /* 对于第二个条件的属性，需要根据 siblingSelectId 推断 */
+    var attr2 = 'data-status';
+    if (siblingSelectId.includes('Space')) attr2 = 'data-space';
+    else if (siblingSelectId.includes('Series')) attr2 = 'data-series';
+    else if (siblingSelectId.includes('Cat') && !siblingSelectId.includes('Status')) attr2 = 'data-category';
+
+    match2 = !sibVal || (row.getAttribute(attr2) === sibVal);
+
+    row.style.display = (match1 && match2) ? '' : 'none';
+    if (match1 && match2) visibleCount++;
+  });
+
+  var noData = section.querySelector('.no-data-row');
+  if (!visibleCount && (val || sibVal)) {
+    if (!noData) {
+      noData = document.createElement('tr');
+      noData.className = 'no-data-row';
+      noData.innerHTML = '<td colspan="20" style="text-align:center;padding:30px;color:var(--t3);font-size:14px;">暂无匹配数据</td>';
+      section.querySelector('.table tbody').appendChild(noData);
+    }
+    noData.style.display = '';
+  } else if (noData) {
+    noData.style.display = 'none';
+  }
+}
+
+
+/* ===== 表格关键词搜索 ===== */
+function searchTable(pageId, keyword, colIndices){
+  var section = document.getElementById(pageId);
+  if (!section) return;
+  var kw = (keyword || '').trim().toLowerCase();
+  var rows = section.querySelectorAll('.table tbody tr');
+  var visibleCount = 0;
+  rows.forEach(function(row){
+    if (row.classList.contains('no-data-row')) return;
+    if (!kw) { row.style.display=''; visibleCount++; return; }
+    var cells = row.querySelectorAll('td');
+    var hit = false;
+    for (var i=0;i<colIndices.length;i++){
+      var ci = colIndices[i];
+      if (cells[ci] && cells[ci].textContent.trim().toLowerCase().indexOf(kw) !== -1){ hit=true; break; }
+    }
+    row.style.display = hit ? '' : 'none';
+    if (hit) visibleCount++;
+  });
+  var noData = section.querySelector('.no-data-row');
+  if (!visibleCount && kw){
+    if (!noData){
+      noData = document.createElement('tr'); noData.className='no-data-row';
+      noData.innerHTML='<td colspan="20" style="text-align:center;padding:30px;color:var(--t3);font-size:14px;">暂无匹配数据</td>';
+      section.querySelector('.table tbody').appendChild(noData);
+    }
+    noData.style.display='';
+  } else if (noData) { noData.style.display='none'; }
+}
+
+/* ===== 用户启用/停用切换 ===== */
+function toggleUserStatus(rowElem, username){
+  var current = rowElem.getAttribute('data-status');
+  var newStatus = (current === '启用') ? '停用' : '启用';
+  var tagCell = rowElem.querySelector('td:nth-child(4)');
+  var btnCell = rowElem.querySelector('td:last-child');
+  var tag = tagCell ? tagCell.querySelector('.tag') : null;
+  if(tag){ tag.textContent = newStatus; tag.className = 'tag ' + statusTagClass(newStatus); }
+  rowElem.setAttribute('data-status', newStatus);
+  var actionBtn = btnCell ? btnCell.querySelector('.btn-act-del, .btn-act[onclick*="toggleUser"]') : null;
+  if(actionBtn){
+    actionBtn.textContent = (newStatus === '启用') ? '停用' : '启用';
+    actionBtn.className = (newStatus === '启用') ? 'btn-act-del' : 'btn-act';
+  }
+  toast('success', username + ' 已' + newStatus);
+}
+
+/* ===== 操作日志：模块筛选 ===== */
+function filterLogModule(val){
+  var section = document.getElementById('page-log-list');
+  if(!section) return;
+  var rows = section.querySelectorAll('.table tbody tr');
+  var visibleCount = 0;
+  rows.forEach(function(row){
+    if(!val || row.getAttribute('data-module') === val){
+      row.style.display = ''; visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  var noData = section.querySelector('.no-data-row');
+  if(!visibleCount && val){
+    if(!noData){
+      noData = document.createElement('tr'); noData.className = 'no-data-row';
+      noData.innerHTML = '<td colspan="20" style="text-align:center;padding:30px;color:var(--t3);font-size:14px;">暂无匹配数据</td>';
+      section.querySelector('.table tbody').appendChild(noData);
+    }
+    noData.style.display = '';
+  } else if(noData){ noData.style.display = 'none'; }
+}
+
+/* ===== 操作日志：操作人搜索（列0=操作人，列1=模块，列2=动作，列3=详情） ===== */
+function searchLog(keyword){
+  var section = document.getElementById('page-log-list');
+  if(!section) return;
+  var kw = (keyword||'').trim().toLowerCase();
+  var rows = section.querySelectorAll('.table tbody tr');
+  var visibleCount = 0;
+  rows.forEach(function(row){
+    if(row.classList.contains('no-data-row')) return;
+    if(!kw){ row.style.display=''; visibleCount++; return; }
+    var cells = row.querySelectorAll('td');
+    var hit = false;
+    for(var i=0;i<4;i++){
+      if(cells[i] && cells[i].textContent.trim().toLowerCase().indexOf(kw)!==-1){ hit=true; break; }
+    }
+    row.style.display = hit ? '' : 'none';
+    if(hit) visibleCount++;
+  });
+  var noData = section.querySelector('.no-data-row');
+  if(!visibleCount && kw){
+    if(!noData){
+      noData = document.createElement('tr'); noData.className = 'no-data-row';
+      noData.innerHTML='<td colspan="20" style="text-align:center;padding:30px;color:var(--t3);font-size:14px;">暂无匹配数据</td>';
+      section.querySelector('.table tbody').appendChild(noData);
+    }
+    noData.style.display='';
+  } else if(noData){ noData.style.display='none'; }
+}
+
+/* ===== 工作台统计：实时统计各模块数据行数 ===== */
+function refreshStats(){
+  function countRows(pageId){
+    var sec = document.getElementById(pageId);
+    if(!sec) return 0;
+    var tbody = sec.querySelector('.table tbody');
+    if(!tbody) return 0;
+    var rows = Array.prototype.filter.call(tbody.querySelectorAll('tr'), function(r){
+      return !r.classList.contains('no-data-row');
+    });
+    return rows.length;
+  }
+  var el;
+  el = document.getElementById('statProducts'); if(el) el.textContent = countRows('page-product-list');
+  el = document.getElementById('statCases');     if(el) el.textContent = countRows('page-case-list');
+  el = document.getElementById('statNews');      if(el) el.textContent = countRows('page-news-list');
+  el = document.getElementById('statJobs');      if(el) el.textContent = countRows('page-job-list');
+}
+
+/* ===== 通用表格分页 ===== */
+function goPage(btn, pageDelta){
+  var pager = btn.closest('.pager');
+  if(!pager) return;
+  var btns = pager.querySelectorAll('button');
+  var curBtn = pager.querySelector('.cur');
+  var curPage = curBtn ? parseInt(curBtn.textContent) || 1 : 1;
+  var totalPages = 0;
+  // 计算总页数：找到同 section 内的 table
+  var section = pager.closest('section') || pager.parentElement;
+  var tbody = section.querySelector('.table tbody');
+  if(tbody){
+    var rows = Array.prototype.filter.call(tbody.querySelectorAll('tr'), function(r){ return !r.classList.contains('no-data-row') && r.style.display !== 'none'; });
+    totalPages = Math.max(1, Math.ceil(rows.length / 2)); // 每页2条
+  }
+  var newPage = curPage + pageDelta;
+  if(newPage < 1) newPage = 1;
+  if(newPage > totalPages) newPage = totalPages;
+  if(newPage === curPage) return;
+
+  // 切换行显示
+  if(tbody){
+    var allRows = tbody.querySelectorAll('tr');
+    var visibleIdx = 0;
+    Array.prototype.forEach.call(allRows, function(row){
+      if(row.classList.contains('no-data-row')) return;
+      if(row.style.display === 'none') return; // 被筛选隐藏的不参与分页
+      row.style.display = (visibleIdx >= (newPage-1)*2 && visibleIdx < newPage*2) ? '' : 'none';
+      visibleIdx++;
+    });
+  }
+
+  // 更新按钮状态
+  btns.forEach(function(b){
+    var t = b.textContent.trim();
+    b.classList.remove('cur');
+    if(t === String(newPage)) b.classList.add('cur');
+  });
+}
+
+</script>
+</body>
+</html>
