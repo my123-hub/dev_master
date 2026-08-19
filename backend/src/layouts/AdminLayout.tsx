@@ -3,6 +3,7 @@
 // - 顶栏：面包屑 + 用户信息（角色标签 + 登出）
 // - 权限入口：菜单按权限点显隐（hasPerm，仅视觉，服务端强制 NFR-07）
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Layout, Menu, Breadcrumb, Dropdown, Tag, Avatar } from 'antd'
 import {
   DashboardOutlined,
@@ -16,14 +17,26 @@ import {
   TeamOutlined,
   ShopOutlined,
   InboxOutlined,
+  SettingOutlined,
+  KeyOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getUser, hasPerm, logout } from '@/store/auth'
 
 const { Sider, Header, Content } = Layout
 
+// 菜单项类型：key 即路由路径；需要权限点的项用 perm 标注（子项也可带 perm）
+interface MenuItem {
+  key: string
+  icon?: ReactNode
+  label: string
+  perm?: string
+  children?: MenuItem[]
+}
+
 // 菜单配置：key 即路由路径；需要权限点的项用 perm 标注
-const MENU = [
+const MENU: MenuItem[] = [
   {
     key: '/dashboard',
     icon: <DashboardOutlined />,
@@ -87,13 +100,26 @@ const MENU = [
     label: '首页配置',
     perm: 'home:view',
   },
+  {
+    key: '/system',
+    icon: <SettingOutlined />,
+    label: '系统管理',
+    perm: 'system:user',
+    children: [
+      { key: '/system/users', label: '用户管理', perm: 'system:user' },
+      { key: '/system/roles', label: '角色权限', perm: 'system:role' },
+      { key: '/system/logs', label: '操作日志', perm: 'system:log' },
+    ],
+  },
 ]
 
-/** 按权限过滤菜单（无权限点要求的菜单项始终可见） */
-function filterByPerm(items: typeof MENU): typeof MENU {
+/** 按权限过滤菜单（无权限点要求的菜单项始终可见；子项同样按权限显隐） */
+function filterByPerm(items: MenuItem[]): MenuItem[] {
   return items
     .filter((m) => !m.perm || hasPerm(m.perm))
-    .map((m) => (m.children ? { ...m, children: m.children.filter((c) => true) } : m))
+    .map((m) => (m.children
+      ? { ...m, children: m.children.filter((c) => !c.perm || hasPerm(c.perm)) }
+      : m))
 }
 
 export default function AdminLayout() {
@@ -154,7 +180,7 @@ export default function AdminLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          items={menus}
+          items={menus as any}
           selectedKeys={[selectedKey]}
           // 手风琴：openKeys 受控，只保留当前父级
           openKeys={currentParent}

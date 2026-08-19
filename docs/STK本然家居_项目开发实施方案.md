@@ -377,3 +377,24 @@ flowchart LR
 ---
 
 *本文档 V1.0，依据四份基线文档编制；后续随实施演进以变更记录方式更新版本。*
+
+---
+
+## 11. 里程碑交付记录
+
+### M6 系统管理（2026-08-19 交付）
+
+| 层 | 交付内容 | 验证 |
+|----|---------|------|
+| 后端 | `app/schemas/system.py`（User/Role/Permission/Log 模型）；`app/routers/admin/system.py`（用户管理 / 角色权限 / 操作日志 / 部门接口，服务端 `require_perm` 强制校验 `system:user/role/log`）；`app/main.py` 挂载路由 | FastAPI TestClient 冒烟 19 项全通过（含超管权限保护 403、自身保护 403） |
+| 前端 | `backend/src/pages/system/` 新增用户管理 / 角色权限（勾选式，按菜单分组）/ 操作日志（只读分页筛选）三页面；`App.tsx` 接入路由；`AdminLayout.tsx` 接入「系统管理」手风琴菜单（按权限显隐子项） | `npm run build`（tsc -b + vite build）0 错误 |
+| 联调 | 运行后端 HTTP 实测 `GET /users`、`/roles`、`/logs`、`/departments` 均 200 | 端到端链路打通 |
+
+**关键约束落地**
+- RBAC 服务端强制校验（`require_perm`），前端仅做菜单/按钮隐藏（NFR-07）。
+- 内置 `super_admin` 角色权限不可改（PUT 返回 40300）；禁止停用/降权自身账号。
+- 权限点全量清单（M6-4）固化于 `api/scripts/seed.py` 的 `PERMISSIONS`（38 项，按后台菜单/功能模块拆分），种子已注入。
+- 新增用户默认 `must_change_pwd=True`（首次登录强制改密，BR-06）；重置密码生成随机强密码并回显给管理员。
+- 操作日志由关键操作自动写入 `sys_operation_log`（登录/增删改/状态流转/重置密码/角色权限更新），只读查询，日志列表附加操作人登录名。
+
+**待用户确认后进入 M7（联调与上线）。**

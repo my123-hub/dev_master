@@ -400,3 +400,81 @@ export const leadApi = {
   exportMessages: (params: { fmt?: 'csv' | 'excel'; status?: number; keyword?: string }) =>
     request.get<any>(`/exports/messages`, { params, responseType: 'blob' }),
 }
+
+// ==================== 系统管理（M6） ====================
+export interface UserItem {
+  id: number
+  username: string
+  name: string | null
+  nickname: string | null
+  mobile: string | null
+  email: string | null
+  gender: number
+  position: string | null
+  dept_id: number | null
+  dept_name: string | null
+  role_id: number
+  role_name: string | null
+  is_activate: number
+  must_change_pwd: boolean
+  last_login_at: string | null
+  created_date: string | null
+}
+export interface UserPayload {
+  username: string
+  password?: string
+  name?: string | null
+  nickname?: string | null
+  mobile?: string | null
+  email?: string | null
+  gender?: number
+  position?: string | null
+  dept_id?: number | null
+  role_id: number
+}
+export interface RoleItem {
+  id: number
+  role_name: string
+  remark: string | null
+  permissions: string[]
+  is_builtin: boolean
+}
+export interface PermissionCatalogItem {
+  perm_code: string
+  perm_name: string | null
+  menu_key: string | null
+}
+export interface LogItem {
+  id: number
+  user_id: number | null
+  username: string | null
+  module: string | null
+  action: string | null
+  detail: string | null
+  ip: string | null
+  created_date: string | null
+}
+export interface DeptItem {
+  id: number
+  dept_name: string
+  parent_id: number | null
+}
+export const systemApi = {
+  // 用户管理
+  users: (params: { page: number; page_size: number; keyword?: string; role_id?: number; is_activate?: number }) =>
+    request.get<PageResult<UserItem>>('/users', { params }),
+  createUser: (data: UserPayload) => request.post<UserItem>('/users', data),
+  updateUser: (id: number, data: Partial<UserPayload> & { is_activate?: number }) =>
+    request.put<UserItem>(`/users/${id}`, data),
+  disableUser: (id: number) => request.delete<any>(`/users/${id}`),
+  resetPassword: (id: number) => request.put<{ new_password: string }>(`/users/${id}/reset-password`),
+  // 部门（用户归属下拉）
+  departments: () => request.get<DeptItem[]>('/departments'),
+  // 角色权限
+  roles: () => request.get<{ items: RoleItem[]; permissions: PermissionCatalogItem[] }>('/roles'),
+  updateRole: (id: number, data: { permission_codes: string[]; remark?: string }) =>
+    request.put<any>(`/roles/${id}`, data),
+  // 操作日志
+  logs: (params: { page: number; page_size: number; module?: string; action?: string; keyword?: string; date_from?: string; date_to?: string }) =>
+    request.get<PageResult<LogItem>>('/logs', { params }),
+}

@@ -25,6 +25,7 @@ from app.routers.admin import leads as admin_leads
 from app.routers.admin import news as admin_news
 from app.routers.admin import products as admin_products
 from app.routers.admin import stores as admin_stores
+from app.routers.admin import system as admin_system
 from app.routers.admin import upload as admin_upload
 # M4 前台公开接口（无需鉴权，开发技术文档 §6.2）
 from app.routers.public import catalog as public_catalog
@@ -72,6 +73,8 @@ def create_app() -> FastAPI:
     app.include_router(admin_stores.router, prefix="/api/admin", tags=["后台-门店"])
     app.include_router(admin_leads.router, prefix="/api/admin", tags=["后台-留资"])
     app.include_router(admin_exports.router, prefix="/api/admin", tags=["后台-导出"])
+    # M6 系统管理：用户 / 角色权限 / 操作日志 / 部门（仅超级管理员 system:*）
+    app.include_router(admin_system.router, prefix="/api/admin", tags=["后台-系统管理"])
 
     # M4 前台公开接口（无需鉴权，开发技术文档 §6.2）
     app.include_router(public_home.router, prefix="/api", tags=["前台-首页"])

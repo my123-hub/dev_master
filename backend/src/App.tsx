@@ -17,6 +17,9 @@ import FaqList from '@/pages/content/FaqList'
 import StoreEdit from '@/pages/store/StoreEdit'
 import LeadList from '@/pages/lead/LeadList'
 import HomeConfig from '@/pages/home/HomeConfig'
+import UserList from '@/pages/system/UserList'
+import RoleList from '@/pages/system/RoleList'
+import LogList from '@/pages/system/LogList'
 
 /** 路由守卫：未登录跳转 /login */
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -62,6 +65,10 @@ export default function App() {
         <Route path="leads" element={<LeadList />} />
         {/* 首页配置 */}
         <Route path="home" element={<HomeConfig />} />
+        {/* 系统管理（M6） */}
+        <Route path="system/users" element={<UserList />} />
+        <Route path="system/roles" element={<RoleList />} />
+        <Route path="system/logs" element={<LogList />} />
       </Route>
 
       {/* 兜底：未知路径回首页 */}
