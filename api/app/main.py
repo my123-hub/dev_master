@@ -26,6 +26,12 @@ from app.routers.admin import news as admin_news
 from app.routers.admin import products as admin_products
 from app.routers.admin import stores as admin_stores
 from app.routers.admin import upload as admin_upload
+# M4 前台公开接口（无需鉴权，开发技术文档 §6.2）
+from app.routers.public import catalog as public_catalog
+from app.routers.public import content as public_content
+from app.routers.public import home as public_home
+from app.routers.public import jobs as public_jobs
+from app.routers.public import leads as public_leads
 
 
 def create_app() -> FastAPI:
@@ -66,6 +72,13 @@ def create_app() -> FastAPI:
     app.include_router(admin_stores.router, prefix="/api/admin", tags=["后台-门店"])
     app.include_router(admin_leads.router, prefix="/api/admin", tags=["后台-留资"])
     app.include_router(admin_exports.router, prefix="/api/admin", tags=["后台-导出"])
+
+    # M4 前台公开接口（无需鉴权，开发技术文档 §6.2）
+    app.include_router(public_home.router, prefix="/api", tags=["前台-首页"])
+    app.include_router(public_catalog.router, prefix="/api", tags=["前台-产品"])
+    app.include_router(public_content.router, prefix="/api", tags=["前台-内容"])
+    app.include_router(public_jobs.router, prefix="/api", tags=["前台-招聘"])
+    app.include_router(public_leads.router, prefix="/api", tags=["前台-留资提交"])
 
     # 静态资源：上传图片目录（上传接口返回 /static/uploads/... 即映射此处）
     # 目录不存在时自动创建，保证启动即可用（NFR-09 图片回显）

@@ -51,3 +51,4 @@ Thumbs.db
 
 # ---- 项目内部临时产物（不入仓）----
 .workbuddy/shots/
+.workbuddy/chrome_*/
