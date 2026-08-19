@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   全局基础样式（UI-UX §2 设计规范 · 墨玉翡翠主题）
+   - 全站禁用蓝色（任何 UI 元素不得出现蓝系色相）
+   - serif 标题 / 无衬线正文
+   ============================================================ */
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-ivory text-warmgray-900 font-sans antialiased;
+  }
+  /* 标题统一 serif 衬线（UI-UX §2.2） */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-jade-700;
+  }
+  /* 图片默认块级（避免幽灵空隙） */
+  img {
+    @apply block max-w-full;
+  }
+}
+
+/* ============================================================
+   富文本正文（wangEditor 产出 HTML 渲染容器）
+   - 行高/段落间距/标题层级/图片圆角/链接品牌色
+   ============================================================ */
+.rich-text {
+  @apply leading-7 text-warmgray-700;
+  p {
+    @apply my-3;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply my-4 font-bold;
+  }
+  img {
+    @apply my-4 rounded-card mx-auto;
+  }
+  ul {
+    @apply list-disc pl-6 my-3;
+  }
+  ol {
+    @apply list-decimal pl-6 my-3;
+  }
+  a {
+    @apply text-jade-600 underline underline-offset-4 hover:text-gold-600;
+  }
+  blockquote {
+    @apply border-l-4 border-gold-500 pl-4 my-4 text-warmgray-500 italic;
+  }
+}
+
+/* ============================================================
+   通用组件类（导航/按钮/卡片）
+   ============================================================ */
+@layer components {
+  /* 品牌按钮：墨玉绿底 + 白字；悬停香槟金高光 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-jade-700 text-white
+           px-8 py-3 rounded-full text-sm tracking-widest
+           transition-all duration-300 hover:bg-jade-600 hover:shadow-card-hover
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  /* 描边按钮：墨玉绿边框 + 品牌绿字 */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border border-jade-700 text-jade-700
+           px-8 py-3 rounded-full text-sm tracking-widest bg-transparent
+           transition-all duration-300 hover:bg-jade-700 hover:text-white;
+  }
+  /* 香槟金小标题（品牌气质点缀） */
+  .brand-tag {
+    @apply text-gold-600 text-xs tracking-brand uppercase font-medium;
+  }
+  /* 卡片 */
+  .card {
+    @apply bg-white rounded-card shadow-card overflow-hidden
+           transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
+  }
+  /* 表单输入（墨玉翡翠 focus 环，禁用蓝） */
+  .input {
+    @apply w-full border border-warmgray-300 rounded-lg px-4 py-3 text-sm
+           focus:outline-none focus:ring-2 focus:ring-jade-500/40 focus:border-jade-600
+           transition-colors placeholder:text-warmgray-300;
+  }
+  .label {
+    @apply block text-sm text-warmgray-700 mb-1.5;
+  }
+  /* 页面主体容器：最大宽度 + 水平留白 */
+  .container-site {
+    @apply max-w-7xl mx-auto px-5 md:px-8;
+  }
+  /* 分节标题：香槟金小标签 + serif 大标题 + 金色分隔线 */
+  .section-title {
+    @apply text-center mb-12;
+  }
+  .section-title h2 {
+    @apply text-3xl md:text-4xl font-semibold mt-3;
+  }
+  .section-title .divider {
+    @apply w-12 h-0.5 bg-gold-500 mx-auto mt-5;
+  }
+}

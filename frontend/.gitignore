@@ -1,0 +1,5 @@
+# frontend 工程忽略项（Node 依赖与构建产物）
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
