@@ -166,3 +166,62 @@ export const submitAppointment = (data: {
 
 export const submitMessage = (data: { name: string; phone: string; email?: string; content: string }) =>
   post('/messages', data)
+
+// ---- 招聘（§6.2.10~6.2.11 + 6.2.19） ----
+export interface JobItem {
+  id: number
+  title: string
+  location: string
+  category: number // 1 社会招聘 / 2 校园招聘
+  job_type: string | null
+  salary_range: string | null
+  is_urgent: number
+  created_date: string
+}
+export interface JobDetail extends JobItem {
+  responsibility: string | null
+  requirement: string | null
+  contact: string
+}
+export const fetchJobs = (category?: number) =>
+  get<JobItem[]>('/jobs', category ? { category } : undefined)
+export const fetchJobDetail = (id: number) => get<JobDetail>(`/jobs/${id}`)
+
+/** 投递简历（multipart）：resume 为 PDF/Word 文件（≤10MB，后端校验） */
+export const submitApplication = (jobId: number, data: {
+  name: string
+  phone: string
+  email?: string
+  resume: File
+  note?: string
+}) => {
+  const form = new FormData()
+  form.append('name', data.name)
+  form.append('phone', data.phone)
+  if (data.email) form.append('email', data.email)
+  form.append('resume', data.resume)
+  if (data.note) form.append('note', data.note)
+  return postForm(`/jobs/${jobId}/apply`, form)
+}
+
+// ---- 单页 / 历程 / FAQ（§6.2.12~6.2.14） ----
+export interface PageContent {
+  title: string | null
+  content: string | null
+  cover_url: string | null
+}
+export interface MilestoneItem {
+  year: string
+  title: string | null
+  description: string | null
+}
+export interface FaqItem {
+  id: number
+  category: string | null
+  question: string
+  answer: string | null
+}
+export const fetchPage = (contentType: 'about_stk' | 'brand_intro' | 'after_sales_policy') =>
+  get<PageContent>(`/page/${contentType}`)
+export const fetchMilestones = () => get<MilestoneItem[]>('/milestones')
+export const fetchFaqs = () => get<FaqItem[]>('/faqs')

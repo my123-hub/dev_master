@@ -12,6 +12,10 @@ import CaseList from '@/pages/cases/List'
 import CaseDetail from '@/pages/cases/Detail'
 import NewsList from '@/pages/news/List'
 import NewsDetail from '@/pages/news/Detail'
+import Jobs from '@/pages/jobs/Jobs'
+import About from '@/pages/about/About'
+import Contact from '@/pages/contact/Contact'
+import Support from '@/pages/support/Support'
 
 /** 页面切换时回到顶部（SPA 路由体验） */
 function ScrollToTop() {
@@ -40,6 +44,17 @@ export default function App() {
           {/* 新闻 */}
           <Route path="/news" element={<NewsList />} />
           <Route path="/news/:id" element={<NewsDetail />} />
+          {/* 招聘（M5） */}
+          <Route path="/jobs" element={<Jobs />} />
+          {/* 关于我们（M5：关于 STK / 品牌介绍 / 发展历程） */}
+          <Route path="/about" element={<About />} />
+          <Route path="/about/brand" element={<About />} />
+          <Route path="/about/history" element={<About />} />
+          {/* 联系我们（M5：预约 + 留言 + 地图） */}
+          <Route path="/contact" element={<Contact />} />
+          {/* 服务支持（M5：售后政策 + FAQ） */}
+          <Route path="/support" element={<Support />} />
+          <Route path="/support/faq" element={<Support />} />
           {/* 404 兜底 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
