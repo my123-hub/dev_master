@@ -16,10 +16,15 @@ from app.core.exceptions import register_exception_handlers
 from app.core.response import ok
 from app.routers.admin import auth as admin_auth
 from app.routers.admin import banners as admin_banners
+from app.routers.admin import cases as admin_cases
 from app.routers.admin import categories as admin_categories
 from app.routers.admin import content as admin_content
+from app.routers.admin import exports as admin_exports
+from app.routers.admin import jobs as admin_jobs
+from app.routers.admin import leads as admin_leads
 from app.routers.admin import news as admin_news
 from app.routers.admin import products as admin_products
+from app.routers.admin import stores as admin_stores
 from app.routers.admin import upload as admin_upload
 
 
@@ -55,6 +60,12 @@ def create_app() -> FastAPI:
     app.include_router(admin_content.router, prefix="/api/admin", tags=["后台-内容/配置"])
     app.include_router(admin_banners.router, prefix="/api/admin", tags=["后台-首页轮播"])
     app.include_router(admin_upload.router, prefix="/api/admin", tags=["后台-上传"])
+    # M3 后台扩展模块：案例 / 招聘职位+投递 / 门店 / 留资(预约+留言) / 导出
+    app.include_router(admin_cases.router, prefix="/api/admin", tags=["后台-案例"])
+    app.include_router(admin_jobs.router, prefix="/api/admin", tags=["后台-招聘"])
+    app.include_router(admin_stores.router, prefix="/api/admin", tags=["后台-门店"])
+    app.include_router(admin_leads.router, prefix="/api/admin", tags=["后台-留资"])
+    app.include_router(admin_exports.router, prefix="/api/admin", tags=["后台-导出"])
 
     # 静态资源：上传图片目录（上传接口返回 /static/uploads/... 即映射此处）
     # 目录不存在时自动创建，保证启动即可用（NFR-09 图片回显）
