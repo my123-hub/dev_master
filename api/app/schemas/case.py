@@ -6,7 +6,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.utils.security import clean_html
 
 
 class CaseBase(BaseModel):
@@ -26,6 +28,12 @@ class CaseBase(BaseModel):
     # 富文本项目介绍（wangEditor 产出 HTML，入库前清洗）
     content: str | None = Field(default=None, description="项目介绍（富文本 HTML）")
     images: list[str] | None = Field(default=None, description="实景图集 URL 数组")
+
+    @field_validator("content", mode="after")
+    @classmethod
+    def _sanitize_content(cls, v: str | None) -> str | None:
+        """【校验】项目介绍入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
     sort_order: int = Field(default=0, ge=0, le=9999, description="排序（小在前）")
     status: int = Field(default=1, ge=0, le=1, description="发布状态：1 发布 / 0 下线")
 

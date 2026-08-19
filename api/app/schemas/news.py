@@ -6,7 +6,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.utils.security import clean_html
 
 
 # ============================================================
@@ -53,6 +55,12 @@ class NewsArticleBase(BaseModel):
     # 富文本正文：wangEditor 产出 HTML，入库前清洗（PRD NFR-08）
     content: str | None = Field(default=None, description="正文（富文本 HTML）")
     source: str | None = Field(default=None, max_length=100, description="来源（转载标注）")
+
+    @field_validator("content", mode="after")
+    @classmethod
+    def _sanitize_content(cls, v: str | None) -> str | None:
+        """【校验】正文入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
     is_published: int = Field(default=0, ge=0, le=1, description="是否发布：1 已发布 / 0 未发布（草稿）")
     is_top: int = Field(default=0, ge=0, le=1, description="是否置顶/推荐：1 是 / 0 否")
     publish_time: datetime | None = Field(default=None, description="发布时间（未填发布时取当前时间）")

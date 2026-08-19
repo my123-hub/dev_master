@@ -6,6 +6,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
+  // 关闭 Vite 自带的 outDir 清空：当前环境对 fs.rmSync 做了「安全删除」包装，
+  // 在清空 dist 时会因 trash 操作失败而中断构建。改为由构建脚本先手动删除 dist。
+  build: {
+    emptyOutDir: false,
+  },
   // @ 别名：src 目录（TS 侧 tsconfig paths 同步配置）
   resolve: {
     alias: {

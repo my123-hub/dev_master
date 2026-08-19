@@ -6,7 +6,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.utils.security import clean_html
 
 
 # ============================================================
@@ -61,6 +63,13 @@ class ProductBase(BaseModel):
     product_no: str = Field(min_length=1, max_length=50, description="产品编号（唯一）")
     # 富文本描述：前端 wangEditor 产出 HTML，入库前清洗（PRD NFR-08 XSS 白名单）
     description: str | None = Field(default=None, description="产品描述（富文本 HTML）")
+
+    @field_validator("description", mode="after")
+    @classmethod
+    def _sanitize_description(cls, v: str | None) -> str | None:
+        """【校验】产品描述入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
+
     # 动态规格参数：JSON 数组，规格可随产品变化（BR-15）
     specs: list[SpecItem] | None = Field(default=None, description="规格参数数组")
     cover_url: str | None = Field(default=None, max_length=255, description="封面图 URL")

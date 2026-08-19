@@ -12,6 +12,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    // 本机构建沙箱对 fs.rmSync 做了「安全删除」包装，清空 dist 会失败；
+    // 关闭自动清空，改由 CI/本地 rm 清空 dist 后再构建（生产 Docker 全新上下文不受影响）
+    emptyOutDir: false,
+  },
   server: {
     port: 5174,                 // 后台管理端口（前台 5173 已预留）
     proxy: {

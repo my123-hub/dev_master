@@ -7,7 +7,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.utils.security import clean_html
 
 
 # ============================================================
@@ -19,6 +21,12 @@ class PageContentUpdate(BaseModel):
     title: str | None = Field(default=None, max_length=150, description="页面标题")
     content: str | None = Field(default=None, description="富文本正文（HTML，入库前清洗）")
     cover_url: str | None = Field(default=None, max_length=255, description="封面图 URL")
+
+    @field_validator("content", mode="after")
+    @classmethod
+    def _sanitize_content(cls, v: str | None) -> str | None:
+        """【校验】单页正文入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
 
 
 class PageContentOut(PageContentUpdate):
@@ -69,6 +77,12 @@ class FaqBase(BaseModel):
     question: str = Field(min_length=1, max_length=300, description="问题")
     answer: str | None = Field(default=None, description="答案（富文本）")
     sort_order: int = Field(default=0, ge=0, le=9999, description="排序")
+
+    @field_validator("answer", mode="after")
+    @classmethod
+    def _sanitize_answer(cls, v: str | None) -> str | None:
+        """【校验】FAQ 答案入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
 
 
 class FaqCreate(FaqBase):

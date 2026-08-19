@@ -6,6 +6,8 @@
 """
 from pydantic import BaseModel, Field, field_validator
 
+from app.utils.security import clean_html
+
 # 中国大陆手机号正则：1 开头、第二位 3-9、共 11 位（开发技术文档 §6.2.17，FR-43）
 PHONE_PATTERN = r"^1[3-9]\d{9}$"
 
@@ -21,6 +23,12 @@ class AppointmentCreate(BaseModel):
     appointment_date: str | None = Field(default=None, max_length=30, description="预约到店时间")
     intention: str | None = Field(default=None, max_length=200, description="意向产品/系列")
     remark: str | None = Field(default=None, max_length=500, description="备注")
+
+    @field_validator("remark", mode="after")
+    @classmethod
+    def _sanitize_remark(cls, v: str | None) -> str | None:
+        """【校验】备注入库前 XSS 清洗（用户公开输入）"""
+        return clean_html(v)
 
     @field_validator("appointment_date")
     @classmethod
@@ -41,6 +49,12 @@ class MessageCreate(BaseModel):
     phone: str = Field(pattern=PHONE_PATTERN, description="手机号（11 位大陆手机号）")
     email: str | None = Field(default=None, max_length=100, description="邮箱（选填）")
     content: str = Field(min_length=1, max_length=2000, description="留言内容")
+
+    @field_validator("content", mode="after")
+    @classmethod
+    def _sanitize_content(cls, v: str) -> str:
+        """【校验】留言正文入库前 XSS 清洗（用户公开输入，高风险）"""
+        return clean_html(v) or ""
 
     @field_validator("email")
     @classmethod

@@ -398,3 +398,21 @@ flowchart LR
 - 操作日志由关键操作自动写入 `sys_operation_log`（登录/增删改/状态流转/重置密码/角色权限更新），只读查询，日志列表附加操作人登录名。
 
 **待用户确认后进入 M7（联调与上线）。**
+
+### M7 联调与上线（2026-08-19 交付）
+
+| 子任务 | 交付内容 | 验证 |
+|-------|---------|------|
+| M7-1 | `api/scripts/smoke_m7.py` 全量接口联调冒烟（Swagger 为事实源）：登录/权限、公开接口 14 GET + 4 详情 + 2 提交、后台 19 GET、全模块 CRUD 闭环、上传、权限保护、留资限流 | FastAPI TestClient **61/61 通过**（含 XSS 清洗层生效）；测试数据 UUID 后缀幂等 + finally 清理，开发库已干净 |
+| M7-2 | 逐页 × 维度走查清单（视觉一致性 / 组件交互 / 响应式三档 / 无障碍 / 性能字体 / 内容），附 Playwright 批量截图脚本 | 交付于 `M7_交付说明.md` §2；截图待生产浏览器环境执行 |
+| M7-3 | 富文本 XSS 清洗（bleach 6.4.0 白名单，`api/app/utils/security.py`，接入 6 个 schema）；字体外链 `fonts.googleapis.com` → **`fonts.googleapis.cn` 国内镜像**（自托管 15MB 不可行，见决策说明）；构建产物核查 | 前台 dist **260KB**（gzip JS 67.6KB），后台 dist 2.2M（gzip 720KB，已提示后续 code-split）；检查表见 `M7_交付说明.md` §3（12 项） |
+| M7-4 | 种子幂等重跑验证（get-or-create 全 SKIP）；「上线前待办清单」10 项（门店真实地址/品牌文案/正式素材/域名备案/证书/凭据/CORS/地图 Key） | 重跑 seed 幂等 ✅；待办清单见 `M7_交付说明.md` §4 |
+| M7-5 | 部署产物全套：`deploy/docker-compose.prod.yml`（postgres/api/web/admin/nginx 五服务 + pgdata/uploads 双卷）、`deploy/nginx.conf`（80/8080 + /api 反代 + TLS 模板）、`.env.prod.example`、`backup.sh`（pg_dump 保留 7 天）、3 个 Dockerfile + `api/entrypoint.sh`（等 DB→alembic→seed→uvicorn，含就绪重试修复）+ 2 个 SPA 配置 | `docker-compose.prod.yml` YAML 语法校验通过（5 服务/2 卷/构建上下文正确）；沙箱无 docker，`docker compose config` 实测留待目标环境 |
+
+**关键修复与决策（M7）**
+- **smoke_m7.py 命名冲突**：测试 payload 硬编码 `M7175824` 未用随机 SUFFIX，导致与历史遗留数据 409 冲突。修复为真实插值 SUFFIX，并清理 11 张表 22 条遗留测试数据 → 61/61 稳定通过。
+- **entrypoint.sh 就绪检查失效**：`|| true` 使 DB 就绪探测恒成功、重试循环失效。修复为正确捕获退出码（虽有 `depends_on: service_healthy` 兜底，仍按正确性修复）。
+- **字体方案**：自托管 CJK 字体（@fontsource）构建产物飙至 15MB（CJK 全字重各含完整字形集），违背首屏<3s；最终采用 `fonts.googleapis.cn` 国内镜像（HTML ~1KB、unicode-range 按需加载、首包 260KB）。若需零外部依赖可切换自托管（接受 7–15MB 首包）。
+- **沙箱 safe-delete 兼容**：前后台 `vite.config.ts` 均设 `build.emptyOutDir:false`，规避 Vite 清空 dist 被沙箱拦截（生产 Docker 全新上下文不受影响）。
+
+**待用户审阅 `M7_交付说明.md` 后确认，进入项目收尾/正式上线阶段。**

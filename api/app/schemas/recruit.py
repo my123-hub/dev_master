@@ -6,7 +6,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.utils.security import clean_html
 
 
 # ============================================================
@@ -30,6 +32,12 @@ class JobBase(BaseModel):
     responsibility: str | None = Field(default=None, description="岗位职责（富文本）")
     requirement: str | None = Field(default=None, description="任职要求（富文本）")
     contact: str = Field(min_length=1, max_length=200, description="简历投递邮箱/联系方式")
+
+    @field_validator("responsibility", "requirement", mode="after")
+    @classmethod
+    def _sanitize_richtext(cls, v: str | None) -> str | None:
+        """【校验】职位富文本字段入库前 XSS 清洗（bleach 白名单）"""
+        return clean_html(v)
     is_urgent: int = Field(default=0, ge=0, le=1, description="1 急招 / 0 普通")
     status: int = Field(default=1, ge=0, le=1, description="1 招聘中 / 0 已关闭")
 
